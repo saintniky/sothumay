@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sổ Thu Máy - Điều Hành Thu Mua Điện Thoại Cũ</title>
+<meta name="theme-color" content="#7c3aed">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Icon: bộ SVG nội tuyến, dùng chung cách viết class fa-* như A.I Store.
+     Nếu đưa file này lên Vercel, chỉ cần thêm lại link Font Awesome là icon thật sẽ hiện. -->
+<style>
+  body, input, select, textarea, button { font-family: 'Inter', sans-serif; }
+  input::placeholder, textarea::placeholder { font-family:'Inter',sans-serif; font-weight:500; color:#94a3b8; opacity:1; }
+  .custom-scrollbar::-webkit-scrollbar { width:6px; height:6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background:#f1f5f9; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+
+  /* ===== hệ giao diện chung (đồng bộ A.I Store 3.0) ===== */
+  .app-bg{
+    background-color:#f6f7fb;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(168,85,247,.10) 0px, transparent 45%),
+      radial-gradient(at 100% 0%, rgba(99,102,241,.10) 0px, transparent 40%),
+      radial-gradient(at 100% 100%, rgba(236,72,153,.07) 0px, transparent 45%);
+    background-attachment:fixed;
+  }
+  main .bg-white.rounded-2xl{
+    border-color:rgba(226,232,240,.9)!important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 30px -18px rgba(79,70,229,.25)!important;
+  }
+  .page-icon{width:44px;height:44px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 8px 18px -8px rgba(124,58,237,.55)}
+  .page-title{font-size:17px;font-weight:900;color:#0f172a;letter-spacing:-.01em;line-height:1.25}
+  .page-sub{font-size:12px;font-weight:500;color:#64748b;margin-top:1px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid #f1f5f9;background:#fff}
+  .section-title{font-size:13px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.03em}
+  .section-dot{width:8px;height:8px;border-radius:9999px;flex-shrink:0}
+  .btn-grad{background-image:linear-gradient(135deg,#9333ea 0%,#7c3aed 50%,#6366f1 100%)!important;background-color:transparent!important;box-shadow:0 8px 18px -10px rgba(124,58,237,.8)!important}
+  .btn-grad:hover{filter:brightness(1.08)}
+  main table thead{background:#f8fafc!important}
+  main table thead th{font-size:10.5px!important;letter-spacing:.06em;color:#64748b}
+  main table tbody tr{transition:background-color .15s}
+  main table tbody tr:hover{background-color:rgba(238,242,255,.55)!important}
+  input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus{
+    outline:none!important;border-color:#8b5cf6!important;box-shadow:0 0 0 3px rgba(139,92,246,.18)!important;
+  }
+  .mnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:14px;color:#64748b;font-size:10px;font-weight:700;transition:all .15s}
+  .mnav-btn i{font-size:16px}
+  .mnav-btn.active{color:#fff;background-image:linear-gradient(135deg,#9333ea,#6366f1);box-shadow:0 8px 18px -10px rgba(124,58,237,.9)}
+  .safe-bottom{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  .pill-tab-active{background:linear-gradient(135deg,#9333ea 0%,#7c3aed 60%,#6366f1 100%)!important;color:#fff!important;box-shadow:0 4px 14px -2px rgba(147,51,234,.4)!important;border:1px solid rgba(255,255,255,.3)!important}
+  .pill-tab-inactive{background:transparent!important;color:#475569!important;border:1px solid transparent!important}
+  .pill-tab-inactive:hover{background:#e2e8f0!important;color:#0f172a!important}
+  .new-item-flash{animation:newItemFlash 4s ease-out}
+  @keyframes newItemFlash{0%,60%{background-color:#fef9c3}100%{background-color:transparent}}
+  .cell-edit{cursor:pointer;border-bottom:1px dashed #cbd5e1}
+  .cell-edit:hover{color:#7c3aed;border-bottom-color:#7c3aed}
+  .tl{position:relative;padding-left:30px}
+  .tl::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:2px;background:#e2e8f0}
+  .tl-step{position:relative;margin-bottom:14px}
+  .tl-step::before{content:"";position:absolute;left:-26px;top:5px;width:12px;height:12px;border-radius:50%;background:#7c3aed;border:2px solid #fff;box-shadow:0 0 0 2px rgba(124,58,237,.25)}
+  .tl-step.rest::before{background:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
+  .tl-step.move::before{background:#94a3b8;box-shadow:0 0 0 2px rgba(148,163,184,.25)}
+  @media (max-width:767px){ main table.text-sm{min-width:620px} }
+</style>
+</head>
+<body class="app-bg text-slate-800 min-h-screen flex flex-col md:flex-row selection:bg-indigo-500 selection:text-white">
+
+<!-- ================= SIDEBAR ================= -->
+<aside class="hidden md:flex md:w-56 lg:w-60 bg-white/95 backdrop-blur border-r border-slate-200/80 shrink-0 flex-col h-screen sticky top-0 z-30 shadow-[2px_0_12px_rgba(0,0,0,0.03)]">
+  <div class="p-3 md:p-3.5 flex-1 flex flex-col space-y-3 overflow-y-auto custom-scrollbar">
+
+    <div class="flex items-center space-x-2.5 pb-2.5 border-b border-slate-100 shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+        <i class="fa-solid fa-cart-flatbed-suitcase text-sm"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center space-x-1">
+          <h1 class="font-black text-base tracking-tight text-slate-900 truncate">Sổ <span class="text-rose-500">Thu Máy</span></h1>
+          <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-gradient-to-r from-purple-600 to-indigo-500 text-white">1.0</span>
+        </div>
+        <p class="text-[10px] text-slate-400 font-medium truncate">Điều hành thu mua</p>
+      </div>
+    </div>
+
+    <div class="pb-2.5 border-b border-slate-100 shrink-0">
+      <div class="w-full flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 p-2 rounded-xl">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-orange-500 to-pink-500 text-white font-black flex items-center justify-center text-xs shadow-sm shrink-0">
+          <i class="fa-regular fa-calendar-check text-[11px]"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-bold leading-tight text-slate-800 truncate" id="sb-date">—</p>
+          <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider" id="sb-count">0 hẹn</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-1 flex-1">
+      <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-2 pb-0.5">Chức Năng</p>
+      <button data-tab="list" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-active transition-all flex items-center gap-3 text-left">
+        <i class="fa-solid fa-mobile-screen-button w-4 text-center text-sm"></i><span>Mã Máy &amp; Giá</span>
+      </button>
+      <button data-tab="day" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-inactive transition-all flex items-center gap-3 text-left">
+        <i class="fa-solid fa-handshake w-4 text-center text-sm"></i><span>Lịch Hẹn</span>
+      </button>
+      <button data-tab="trip" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-inactive transition-all flex items-center gap-3 text-left">
+        <i class="fa-solid fa-route w-4 text-center text-sm"></i><span>Lịch Trình</span>
+      </button>
+    </div>
+
+    <div class="pt-2.5 border-t border-slate-100 shrink-0">
+      <p class="text-[10px] text-slate-400 font-medium leading-snug">Dữ liệu lưu ngay trên máy anh (localStorage). Giá là giá tham khảo — bấm vào để sửa.</p>
+    </div>
+  </div>
+</aside>
+
+<!-- ================= HEADER ĐIỆN THOẠI ================= -->
+<header class="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 px-3 py-2 flex items-center gap-2">
+  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center shrink-0">
+    <i class="fa-solid fa-cart-flatbed-suitcase text-sm"></i>
+  </div>
+  <div class="flex-1 min-w-0">
+    <h1 class="font-black text-sm tracking-tight text-slate-900 truncate">Sổ <span class="text-rose-500">Thu Máy</span></h1>
+    <p class="text-[10px] text-slate-400 font-medium truncate" id="m-date">—</p>
+  </div>
+  <button id="m-route" class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center" title="Mở route Google Maps"><i class="fa-solid fa-map-location-dot text-sm"></i></button>
+</header>
+
+<!-- ================= NAV DƯỚI (điện thoại) ================= -->
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200/80 px-2 pt-1.5 safe-bottom flex gap-1 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.18)]">
+  <button data-tab="list" class="mnav-btn active"><i class="fa-solid fa-mobile-screen-button"></i><span>Mã máy</span></button>
+  <button data-tab="day" class="mnav-btn"><i class="fa-solid fa-handshake"></i><span>Lịch hẹn</span></button>
+  <button data-tab="trip" class="mnav-btn"><i class="fa-solid fa-route"></i><span>Lịch trình</span></button>
+</nav>
+
+<!-- ================= MAIN ================= -->
+<div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+<main class="flex-1 w-full max-w-[1600px] mx-auto px-3 sm:px-5 lg:px-7 pt-4 pb-28 md:py-6">
+
+  <!-- ============ VIEW 1: MÃ MÁY & GIÁ ============ -->
+  <div id="view-list" class="space-y-4">
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 md:items-center justify-between">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="page-icon bg-gradient-to-br from-orange-500 to-pink-500"><i class="fa-solid fa-mobile-screen-button"></i></div>
+        <div class="min-w-0">
+          <h2 class="page-title">Mã Máy &amp; Khoảng Giá</h2>
+          <p class="page-sub">Danh sách máy cần tìm, giá nhập – giá bán ra</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap md:justify-end">
+        <button id="btn-copy-list" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5">
+          <i class="fa-regular fa-copy text-emerald-600"></i><span class="hidden sm:inline">Copy list</span>
+        </button>
+        <button id="btn-reset" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left text-slate-500"></i><span class="hidden sm:inline">Giá mặc định</span>
+        </button>
+        <button id="btn-add-model" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
+          <i class="fa-solid fa-plus"></i><span>Thêm Mã Máy</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- tìm kiếm & lọc -->
+    <div class="bg-white p-3 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 justify-between items-center">
+      <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto flex-1">
+        <div class="relative min-w-[240px] flex-1 md:flex-initial">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="q" placeholder="Tìm mã máy… vd: note 13, reno, iqoo" autocomplete="off"
+            class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+        </div>
+        <select id="fbrand" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700"></select>
+        <select id="fsort" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700">
+          <option value="brand">Xếp theo hãng</option>
+          <option value="name">Tên máy: A → Z</option>
+          <option value="cheap">Giá nhập: Thấp → Cao</option>
+          <option value="rich">Giá nhập: Cao → Thấp</option>
+          <option value="profit">Lãi dự kiến cao nhất</option>
+        </select>
+      </div>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0" id="cnt">0 mã</p>
+    </div>
+
+    <!-- bảng -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2 min-w-0 flex-wrap">
+          <span class="section-dot bg-emerald-500 animate-pulse"></span>
+          <h3 class="section-title">Danh Sách Mã Máy Cần Thu <span id="badge-cnt" class="normal-case text-emerald-600">(0 mã)</span></h3>
+        </div>
+        <span class="text-[10.5px] font-bold text-slate-400 hidden sm:block">Đơn vị: triệu đồng</span>
+      </div>
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-bold tracking-wider select-none">
+            <tr>
+              <th class="py-3.5 px-3 text-center w-12">STT</th>
+              <th class="py-3.5 px-4">Mã Máy</th>
+              <th class="py-3.5 px-4 whitespace-nowrap">Giá Nhập</th>
+              <th class="py-3.5 px-4 whitespace-nowrap">Giá Bán Ra</th>
+              <th class="py-3.5 px-4 whitespace-nowrap hidden lg:table-cell">Lãi Dự Kiến</th>
+              <th class="py-3.5 px-4 text-center whitespace-nowrap">Tìm Trên Facebook</th>
+              <th class="py-3.5 px-3 text-center w-14"></th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex items-start gap-3">
+      <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-info text-sm"></i></div>
+      <p class="text-xs text-slate-500 font-medium leading-relaxed">
+        Facebook không cho phép trang ngoài tự quét tin bán (API Marketplace đã đóng), nên 3 nút bên phải mỗi dòng mở sẵn truy vấn đúng mã máy đó:
+        <b class="text-slate-700">Marketplace Hà Nội</b> · <b class="text-slate-700">bài viết trên Facebook</b> · <b class="text-slate-700">group thanh lý</b>.
+        Giá là giá tham khảo mặc định — bấm trực tiếp vào số để sửa theo thị trường của anh, app tự lưu.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ VIEW 2: LỊCH HẸN ============ -->
+  <div id="view-day" class="space-y-4 hidden">
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 md:items-center justify-between">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="page-icon bg-gradient-to-br from-emerald-500 to-teal-500"><i class="fa-solid fa-handshake"></i></div>
+        <div class="min-w-0">
+          <h2 class="page-title">Lịch Hẹn Trong Ngày</h2>
+          <p class="page-sub">Người bán đã liên hệ được, địa chỉ &amp; giờ gặp</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap md:justify-end">
+        <input type="date" id="wdate" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700">
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="kpi"></div>
+
+    <!-- ghi chú ngày -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2"><span class="section-dot bg-amber-400"></span><h3 class="section-title">Ghi Chú Công Việc Trong Ngày</h3></div>
+      </div>
+      <div class="p-4">
+        <textarea id="dnote" rows="2" placeholder="vd: ưu tiên Xiaomi &amp; Honor, mang 30tr tiền mặt, nhớ mang sạc test pin…"
+          class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium"></textarea>
+      </div>
+    </div>
+
+    <!-- thêm người bán -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2"><span class="section-dot bg-indigo-500"></span><h3 class="section-title">Thêm Người Bán Đã Liên Hệ Được</h3></div>
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tên người bán</label>
+            <input id="l_name" placeholder="Anh A, chị Hoa…" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
+            <input id="l_phone" inputmode="tel" placeholder="09xx xxx xxx" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Giờ hẹn</label>
+            <input type="time" id="l_time" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Giá chốt (tr)</label>
+            <input id="l_price" inputmode="decimal" placeholder="vd: 3.2" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div class="lg:col-span-2">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Địa chỉ hẹn gặp</label>
+            <input id="l_addr" placeholder="Số nhà, đường, phường, quận… càng chi tiết Maps càng đúng" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Máy</label>
+            <input id="l_model" list="dl_models" placeholder="Chọn / gõ mã máy" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+            <datalist id="dl_models"></datalist>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+          <div class="flex-1">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ghi chú</label>
+            <input id="l_note" placeholder="Tình trạng máy, đã cọc chưa, link bài FB…" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+          </div>
+          <button id="addLead" class="px-5 py-2.5 btn-grad text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
+            <i class="fa-solid fa-calendar-plus"></i><span>Thêm Vào Lịch</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- danh sách hẹn -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="section-dot bg-rose-500 animate-pulse"></span>
+          <h3 class="section-title">Các Cuộc Hẹn <span id="badge-leads" class="normal-case text-rose-600">(0)</span></h3>
+        </div>
+      </div>
+      <div id="leads" class="p-4 space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW 3: LỊCH TRÌNH ============ -->
+  <div id="view-trip" class="space-y-4 hidden">
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 md:items-center justify-between">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="page-icon bg-gradient-to-br from-purple-500 to-fuchsia-500"><i class="fa-solid fa-route"></i></div>
+        <div class="min-w-0">
+          <h2 class="page-title">Lịch Trình Di Chuyển</h2>
+          <p class="page-sub" id="trip-sub">Tự tính từ giờ hẹn sớm nhất trong ngày</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap md:justify-end">
+        <button id="copyPlan" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5">
+          <i class="fa-regular fa-copy text-indigo-600"></i><span>Copy lịch trình</span>
+        </button>
+        <button id="mapRoute" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
+          <i class="fa-solid fa-map-location-dot"></i><span>Mở Route Google Maps</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2"><span class="section-dot bg-sky-500"></span><h3 class="section-title">Thông Số Chuyến Đi</h3></div>
+      </div>
+      <div class="p-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Điểm xuất phát</label>
+          <input id="origin" value="Hòa Bình" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Di chuyển (phút)</label>
+          <input id="travel" type="number" value="90" inputmode="numeric" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Dự phòng (phút)</label>
+          <input id="buffer" type="number" value="20" inputmode="numeric" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nghỉ trưa từ</label>
+          <input id="lunch" type="time" value="12:00" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nghỉ trưa (phút)</label>
+          <input id="lunchlen" type="number" value="60" inputmode="numeric" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2"><span class="section-dot bg-purple-500 animate-pulse"></span><h3 class="section-title">Thời Gian Biểu</h3></div>
+        <span class="text-[10.5px] font-bold text-slate-400" id="trip-date">—</span>
+      </div>
+      <div class="p-5"><div class="tl" id="timeline"></div></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+"use strict";
+/* ============ DỮ LIỆU MẶC ĐỊNH ============
+   [hãng, mã máy, nhập thấp, nhập cao, bán thấp, bán cao] — triệu đồng */
+const SEED=[
+["Honor","Honor X5 Plus",0.9,1.3,1.6,2.0],["Honor","Honor X6a",1.3,1.7,2.1,2.6],
+["Honor","Honor X7b",2.0,2.5,3.0,3.6],["Honor","Honor X8b",2.6,3.2,3.8,4.5],
+["Honor","Honor X9b",3.4,4.2,4.9,5.8],["Honor","Honor 90 Lite",2.3,2.9,3.4,4.1],
+["Honor","Honor 90",4.5,5.5,6.3,7.4],["Honor","Honor 200 Lite",3.6,4.3,5.0,5.9],
+["Honor","Honor 200",6.0,7.2,8.2,9.6],["Honor","Honor Magic6 Lite",3.8,4.6,5.3,6.3],
+["Xiaomi","Redmi 12",1.5,1.9,2.3,2.8],["Xiaomi","Redmi 13",1.9,2.4,2.9,3.5],
+["Xiaomi","Redmi 13C",1.4,1.8,2.2,2.7],["Xiaomi","Redmi 14C",1.8,2.3,2.8,3.4],
+["Xiaomi","Redmi Note 12",2.1,2.6,3.1,3.7],["Xiaomi","Redmi Note 13",2.7,3.3,3.9,4.6],
+["Xiaomi","Redmi Note 13 Pro",3.8,4.6,5.3,6.2],["Xiaomi","Redmi Note 14",3.2,3.9,4.6,5.4],
+["Xiaomi","Redmi Note 14 Pro",4.4,5.3,6.1,7.1],["Xiaomi","Xiaomi 13T",5.5,6.6,7.5,8.8],
+["Xiaomi","Xiaomi 14T",7.5,8.8,9.9,11.5],["POCO","Poco M6 Pro",2.6,3.2,3.8,4.5],
+["POCO","Poco X6",4.2,5.0,5.8,6.8],["POCO","Poco F6",6.2,7.4,8.4,9.8],
+["Vivo","vivo Y18",1.5,1.9,2.3,2.8],["Vivo","vivo Y28",2.2,2.7,3.2,3.9],
+["Vivo","vivo Y36",2.4,3.0,3.5,4.2],["Vivo","vivo Y100",3.6,4.3,5.0,5.9],
+["Vivo","vivo V29",5.0,6.0,6.9,8.1],["Vivo","vivo V30",6.3,7.5,8.5,9.9],
+["Vivo","vivo V40 Lite",5.0,6.0,6.8,8.0],
+["iQOO","iQOO Z9x",2.9,3.5,4.1,4.9],["iQOO","iQOO Z9",4.2,5.0,5.8,6.8],
+["iQOO","iQOO Neo9",6.0,7.1,8.1,9.4],["iQOO","iQOO Neo10",8.0,9.4,10.6,12.3],
+["iQOO","iQOO 12",8.5,10.0,11.3,13.0],
+["OPPO","OPPO A18",1.3,1.7,2.1,2.6],["OPPO","OPPO A38",1.7,2.2,2.6,3.2],
+["OPPO","OPPO A58",2.1,2.6,3.1,3.8],["OPPO","OPPO A60",2.4,3.0,3.5,4.2],
+["OPPO","OPPO A78",2.6,3.2,3.8,4.5],["OPPO","OPPO A80",3.0,3.7,4.3,5.1],
+["OPPO","OPPO Reno 11F",4.0,4.8,5.5,6.5],["OPPO","OPPO Reno 12F",4.6,5.5,6.3,7.4],
+["OPPO","OPPO Reno 13F",5.4,6.4,7.3,8.5],
+["Realme","Realme C53",1.5,1.9,2.3,2.8],["Realme","Realme C61",1.6,2.0,2.4,3.0],
+["Realme","Realme C65",2.0,2.5,3.0,3.6],["Realme","Realme Note 50",1.2,1.6,2.0,2.5],
+["Realme","Realme Note 60",1.7,2.1,2.6,3.2],["Realme","Realme 11",2.8,3.4,4.0,4.8],
+["Realme","Realme 12",3.3,4.0,4.7,5.6],["Realme","Realme 12+",4.0,4.8,5.5,6.5],
+["Realme","Realme 13+",4.8,5.7,6.5,7.6],["Realme","Realme GT6",7.0,8.3,9.4,11.0]
+];
+const BRAND_STYLE={Honor:"bg-sky-50 text-sky-700 border-sky-200",Xiaomi:"bg-orange-50 text-orange-700 border-orange-200",
+POCO:"bg-amber-50 text-amber-700 border-amber-200",Vivo:"bg-indigo-50 text-indigo-700 border-indigo-200",
+iQOO:"bg-violet-50 text-violet-700 border-violet-200",OPPO:"bg-emerald-50 text-emerald-700 border-emerald-200",
+Realme:"bg-yellow-50 text-yellow-700 border-yellow-200"};
+
+/* ============ BỘ ICON SVG (thay Font Awesome khi CDN bị chặn) ============ */
+const ICONS={
+"cart-flatbed-suitcase":'<rect x="3" y="8" width="18" height="10" rx="2"/><path d="M9 8V5h6v3M7 21h.01M17 21h.01"/>',
+"calendar-check":'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M9 15l2 2 4-4"/>',
+"calendar-plus":'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/>',
+"calendar":'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+"mobile-screen-button":'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10.5 18.5h3"/>',
+"handshake":'<path d="M3 12l3.5-3.5 3 2.5 2-2 3 2.5"/><path d="M3 12l5 5 2-2 2 2 5-5-3-3"/>',
+"users":'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M16 6.3a3 3 0 0 1 0 5.4M17.5 19.8c.3-3-.8-4.6-2.5-5.3"/>',
+"route":'<circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19h7.3a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8"/>',
+"map-location-dot":'<path d="M12 21s6-5.5 6-10.5A6 6 0 0 0 6 10.5C6 15.5 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
+"location-dot":'<path d="M12 21s6-5.5 6-10.5A6 6 0 0 0 6 10.5C6 15.5 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
+"location-crosshairs":'<circle cx="12" cy="12" r="6.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+"magnifying-glass":'<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>',
+"copy":'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>',
+"rotate-left":'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v5h5"/>',
+"plus":'<path d="M12 5v14M5 12h14"/>',
+"circle-info":'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.5"/>',
+"store":'<path d="M3 9l2-5h14l2 5v2H3V9z"/><path d="M4.5 11v9h15v-9M9.5 20v-5h5v5"/>',
+"facebook-f":'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M8 11h6M14.5 20v-9c0-1.5.8-2.3 2.3-2.3"/>',
+"newspaper":'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h10M7 16h7"/>',
+"trash-can":'<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>',
+"check":'<path d="M4.5 12.5l5 5 10-11"/>',
+"xmark":'<path d="M6 6l12 12M18 6L6 18"/>',
+"clock":'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/>',
+"pen":'<path d="M4 20h4.5L19 9.5 14.5 5 4 15.5V20z"/><path d="M13 6.5L17.5 11"/>',
+"phone":'<path d="M6 3h4l2 5-2.5 1.8a12.5 12.5 0 0 0 4.7 4.7L16 12l5 2v4a2 2 0 0 1-2.2 2A17 17 0 0 1 4 5.2 2 2 0 0 1 6 3z"/>',
+"note-sticky":'<path d="M5 4h14v10l-5 5H5V4z"/><path d="M19 14h-5v5"/>',
+"car-side":'<path d="M3 14l2-5h9l4 5h2a1 1 0 0 1 1 1v2H3v-3z"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="16.5" cy="18" r="1.8"/>',
+"utensils":'<path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10"/><path d="M16 3c2 1.5 2 4.5 0 6v12"/>',
+"house":'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9z"/>',
+"wallet":'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>',
+"chart-line":'<path d="M4 4v16h16"/><path d="M7 15.5l4-4.5 3 3 5-6.5"/>',
+"circle-check":'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>'
+};
+const FA_ALIAS={"fa-brands":1,"fa-solid":1,"fa-regular":1};
+function paintIcons(root){
+  (root||document).querySelectorAll('i[class*="fa-"]').forEach(el=>{
+    if(el.dataset.painted)return;
+    let key=null;
+    el.classList.forEach(c=>{ if(c.startsWith("fa-")&&!FA_ALIAS[c]&&ICONS[c.slice(3)]) key=c.slice(3); });
+    if(!key)key="circle-info";
+    el.dataset.painted="1";
+    el.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;display:block">${ICONS[key]}</svg>`;
+    el.style.display="inline-flex";el.style.alignItems="center";el.style.justifyContent="center";
+  });
+}
+
+const KEY="sothumay.v1";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isNaN(n)?0:n};
+const fmt=n=>(Math.round(n*10)/10).toFixed(1);
+const m2t=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+const t2m=t=>{if(!t)return null;const p=String(t).split(":");return +p[0]*60+ +p[1]};
+const fresh=()=>SEED.map((m,i)=>({id:"m"+i,brand:m[0],name:m[1],bl:m[2],bh:m[3],sl:m[4],sh:m[5]}));
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.models)return o}}catch(e){}
+  return {models:fresh(),days:{}}}
+let S=load();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const day=d=>{if(!S.days[d])S.days[d]={note:"",leads:[]};return S.days[d]};
+const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+let CUR=todayISO();
+const vnDate=iso=>{const p=iso.split("-");return new Date(p[0],p[1]-1,p[2]).toLocaleDateString("vi-VN",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"})};
+const mapLink=a=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a);
+
+/* ============ ĐIỀU HƯỚNG ============ */
+function go(tab){
+  ["list","day","trip"].forEach(t=>$("#view-"+t).classList.toggle("hidden",t!==tab));
+  document.querySelectorAll(".nav-btn").forEach(b=>{
+    const on=b.dataset.tab===tab;
+    b.classList.toggle("pill-tab-active",on);b.classList.toggle("pill-tab-inactive",!on);
+  });
+  document.querySelectorAll(".mnav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  if(tab==="trip")drawTrip();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav-btn,.mnav-btn").forEach(b=>b.onclick=()=>go(b.dataset.tab));
+
+/* ============ VIEW 1 ============ */
+const brands=()=>[...new Set(S.models.map(m=>m.brand))].sort();
+function fillBrand(){
+  const cur=$("#fbrand").value;
+  $("#fbrand").innerHTML='<option value="">Tất cả hãng</option>'+brands().map(b=>`<option${b===cur?" selected":""}>${esc(b)}</option>`).join("");
+}
+function fbBtns(name){
+  const q=encodeURIComponent(name+" cũ");
+  return `<div class="flex items-center justify-center gap-1.5">
+    <a target="_blank" rel="noopener" title="Marketplace Hà Nội" href="https://www.facebook.com/marketplace/hanoi/search/?query=${encodeURIComponent(name)}"
+      class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition"><i class="fa-solid fa-store text-[11px]"></i></a>
+    <a target="_blank" rel="noopener" title="Tìm bài viết trên Facebook" href="https://www.facebook.com/search/posts/?q=${q}"
+      class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition"><i class="fa-solid fa-newspaper text-[11px]"></i></a>
+    <a target="_blank" rel="noopener" title="Tìm trong group thanh lý" href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(name+" thanh lý")}"
+      class="w-8 h-8 rounded-lg bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition"><i class="fa-solid fa-users text-[11px]"></i></a>
+  </div>`;
+}
+function filtered(){
+  const q=$("#q").value.trim().toLowerCase(),fb=$("#fbrand").value,so=$("#fsort").value;
+  let l=S.models.filter(m=>(!fb||m.brand===fb)&&(!q||(m.name+" "+m.brand).toLowerCase().includes(q)));
+  const by={brand:(a,b)=>a.brand.localeCompare(b.brand)||a.bl-b.bl,name:(a,b)=>a.name.localeCompare(b.name),
+    cheap:(a,b)=>a.bl-b.bl,rich:(a,b)=>b.bl-a.bl,profit:(a,b)=>(b.sl-b.bh)-(a.sl-a.bh)};
+  return l.sort(by[so]||by.brand);
+}
+function drawList(){
+  const l=filtered();
+  $("#cnt").textContent=l.length+" / "+S.models.length+" mã";
+  $("#badge-cnt").textContent="("+l.length+" mã)";
+  $("#rows").innerHTML=l.length?l.map((m,i)=>`<tr data-id="${m.id}">
+    <td class="py-3 px-3 text-center text-xs font-bold text-slate-400">${i+1}</td>
+    <td class="py-3 px-4">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${BRAND_STYLE[m.brand]||"bg-slate-50 text-slate-600 border-slate-200"} uppercase">${esc(m.brand)}</span>
+        <span class="font-bold text-slate-800 text-[13.5px]">${esc(m.name)}</span>
+      </div>
+    </td>
+    <td class="py-3 px-4 whitespace-nowrap font-bold text-emerald-600 text-[13.5px]">
+      <span class="cell-edit" data-k="bl">${fmt(m.bl)}</span> – <span class="cell-edit" data-k="bh">${fmt(m.bh)}</span>
+    </td>
+    <td class="py-3 px-4 whitespace-nowrap font-bold text-indigo-600 text-[13.5px]">
+      <span class="cell-edit" data-k="sl">${fmt(m.sl)}</span> – <span class="cell-edit" data-k="sh">${fmt(m.sh)}</span>
+    </td>
+    <td class="py-3 px-4 whitespace-nowrap hidden lg:table-cell text-xs font-bold text-slate-500">+${fmt(m.sl-m.bh)} → +${fmt(m.sh-m.bl)}</td>
+    <td class="py-3 px-4">${fbBtns(m.name)}</td>
+    <td class="py-3 px-3 text-center">
+      <button class="del w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100 transition" title="Xóa mã này"><i class="fa-regular fa-trash-can text-[11px]"></i></button>
+    </td>
+  </tr>`).join(""):`<tr><td colspan="7" class="py-10 text-center text-sm text-slate-400 font-medium">Không có mã nào khớp. Bấm <b>Thêm Mã Máy</b> để thêm.</td></tr>`;
+  $("#dl_models").innerHTML=S.models.map(m=>`<option>${esc(m.name)}</option>`).join("");
+  paintIcons($("#view-list"));
+}
+["q","fbrand","fsort"].forEach(i=>$("#"+i).addEventListener("input",drawList));
+$("#fbrand").addEventListener("change",drawList);$("#fsort").addEventListener("change",drawList);
+
+$("#rows").addEventListener("click",e=>{
+  const tr=e.target.closest("tr");if(!tr)return;
+  const m=S.models.find(x=>x.id===tr.dataset.id);if(!m)return;
+  if(e.target.closest(".del")){
+    if(confirm("Xóa "+m.name+" khỏi danh sách?")){S.models=S.models.filter(x=>x.id!==m.id);save();fillBrand();drawList()}
+    return;
+  }
+  const c=e.target.closest(".cell-edit");
+  if(c){
+    const lbl={bl:"giá nhập thấp",bh:"giá nhập cao",sl:"giá bán thấp",sh:"giá bán cao"}[c.dataset.k];
+    const v=prompt(m.name+" — "+lbl+" (triệu đồng):",fmt(m[c.dataset.k]));
+    if(v!==null){m[c.dataset.k]=num(v);save();drawList()}
+  }
+});
+$("#btn-add-model").onclick=()=>{
+  const name=prompt("Tên mã máy:");if(!name)return;
+  const brand=prompt("Hãng:",name.split(" ")[0])||"Khác";
+  const bl=num(prompt("Giá nhập thấp (tr):","0")),bh=num(prompt("Giá nhập cao (tr):",String(bl)));
+  const sl=num(prompt("Giá bán thấp (tr):",String(bh))),sh=num(prompt("Giá bán cao (tr):",String(sl)));
+  S.models.push({id:"m"+Date.now(),brand,name,bl,bh,sl,sh});save();fillBrand();drawList();
+};
+$("#btn-reset").onclick=()=>{
+  if(confirm("Đặt lại toàn bộ bảng giá về mặc định? Giá anh đã sửa sẽ mất, lịch hẹn vẫn giữ."))
+  {S.models=fresh();save();fillBrand();drawList()}
+};
+$("#btn-copy-list").onclick=()=>{
+  const txt=filtered().map(m=>`${m.name}: nhập ${fmt(m.bl)}–${fmt(m.bh)} / bán ${fmt(m.sl)}–${fmt(m.sh)} tr`).join("\n");
+  navigator.clipboard?.writeText(txt).then(()=>flash($("#btn-copy-list")),()=>prompt("Copy thủ công:",txt));
+};
+function flash(btn){const h=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check text-emerald-600"></i><span class="hidden sm:inline">Đã copy</span>';paintIcons(btn);setTimeout(()=>{btn.innerHTML=h;paintIcons(btn)},1600)}
+
+/* ============ VIEW 2 ============ */
+$("#wdate").value=CUR;
+$("#wdate").onchange=()=>{CUR=$("#wdate").value||todayISO();drawDay();drawTrip()};
+$("#dnote").oninput=()=>{day(CUR).note=$("#dnote").value;save()};
+
+function kpiCard(label,val,sub,color,bg,icon){
+  return `<div class="bg-white p-4 rounded-2xl border shadow-sm flex items-start justify-between gap-2">
+    <div class="min-w-0">
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">${label}</p>
+      <h3 class="text-xl font-black ${color} mt-1 truncate">${val}</h3>
+      <span class="text-[11px] text-slate-400 font-medium">${sub}</span>
+    </div>
+    <div class="w-10 h-10 rounded-xl ${bg} flex items-center justify-center text-base shrink-0"><i class="fa-solid ${icon}"></i></div>
+  </div>`;
+}
+function drawDay(){
+  const d=day(CUR);
+  $("#dnote").value=d.note||"";
+  const leads=[...d.leads].sort((a,b)=>(t2m(a.time)??9999)-(t2m(b.time)??9999));
+  const done=leads.filter(l=>l.st==="done"),live=leads.filter(l=>l.st!=="drop");
+  const spent=done.reduce((s,l)=>s+num(l.price),0),need=live.reduce((s,l)=>s+num(l.price),0);
+  const est=done.reduce((s,l)=>{const m=S.models.find(x=>x.name.toLowerCase()===String(l.model||"").toLowerCase());
+    return s+(m?(m.sl+m.sh)/2-num(l.price):0)},0);
+
+  $("#sb-date").textContent=vnDate(CUR);$("#m-date").textContent=vnDate(CUR);
+  $("#sb-count").textContent=leads.length+" hẹn · "+done.length+" đã thu";
+  $("#trip-date").textContent=vnDate(CUR);
+  $("#badge-leads").textContent="("+leads.length+")";
+
+  $("#kpi").innerHTML=
+    kpiCard("Hẹn Trong Ngày",leads.length,(live.length)+" còn hiệu lực","text-slate-800","bg-indigo-50 text-indigo-600","fa-calendar-check")+
+    kpiCard("Đã Thu Được",done.length+" máy",fmt(spent)+" tr đã chi","text-emerald-600","bg-emerald-50 text-emerald-600","fa-circle-check")+
+    kpiCard("Tiền Cần Mang",fmt(need)+" tr","Tổng giá chốt các hẹn","text-amber-600","bg-amber-50 text-amber-600","fa-wallet")+
+    kpiCard("Lãi Dự Kiến",(est>=0?"+":"")+fmt(est)+" tr","Theo giá bán tham khảo","text-purple-600","bg-purple-50 text-purple-600","fa-chart-line");
+
+  $("#leads").innerHTML=leads.length?leads.map(l=>{
+    const m=S.models.find(x=>x.name.toLowerCase()===String(l.model||"").toLowerCase());
+    const ref=m?`<span class="text-[11px] font-medium text-slate-400">tham khảo: nhập ${fmt(m.bl)}–${fmt(m.bh)} · bán ${fmt(m.sl)}–${fmt(m.sh)} tr</span>`:"";
+    const st=l.st==="done"?{b:"border-emerald-400",bg:"bg-emerald-50/40",t:"bg-emerald-100 text-emerald-700",n:"Đã thu"}
+      :l.st==="drop"?{b:"border-slate-300",bg:"bg-slate-50/60 opacity-60",t:"bg-slate-200 text-slate-600",n:"Không mua"}
+      :{b:"border-indigo-400",bg:"bg-white",t:"bg-indigo-100 text-indigo-700",n:"Chờ gặp"};
+    return `<div class="rounded-2xl border border-slate-200/80 border-l-4 ${st.b} ${st.bg} p-3.5" data-id="${l.id}">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h4 class="font-black text-slate-800 text-[15px]">${esc(l.name||"(chưa có tên)")}</h4>
+            <span class="text-[9.5px] font-black px-2 py-0.5 rounded-md ${st.t} uppercase tracking-wider">${st.n}</span>
+            ${l.model?`<span class="text-[11px] font-bold text-slate-500">${esc(l.model)}</span>`:""}
+            ${l.price?`<span class="text-[13px] font-black text-emerald-600">${fmt(num(l.price))} tr</span>`:""}
+          </div>
+          <div class="mt-1.5 space-y-1">
+            ${ref?`<div>${ref}</div>`:""}
+            ${l.phone?`<div class="text-xs font-medium text-slate-600"><i class="fa-solid fa-phone text-slate-400 w-3.5"></i> <a href="tel:${esc(l.phone)}" class="text-indigo-600 font-bold">${esc(l.phone)}</a></div>`:""}
+            <div class="text-xs font-medium text-slate-600"><i class="fa-solid fa-location-dot text-slate-400 w-3.5"></i> ${l.addr?`<a target="_blank" rel="noopener" href="${mapLink(l.addr)}" class="text-indigo-600 font-bold">${esc(l.addr)}</a>`:"<i class='text-slate-400'>chưa có địa chỉ</i>"}</div>
+            ${l.note?`<div class="text-xs font-medium text-slate-500"><i class="fa-regular fa-note-sticky text-slate-400 w-3.5"></i> ${esc(l.note)}</div>`:""}
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-lg font-black text-slate-800 tabular-nums">${esc(l.time||"--:--")}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-slate-100">
+        <button class="a px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-[11.5px] font-bold transition" data-a="done"><i class="fa-solid fa-check"></i> ${l.st==="done"?"Bỏ đánh dấu":"Đã thu máy"}</button>
+        <button class="a px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11.5px] font-bold transition" data-a="drop"><i class="fa-solid fa-xmark"></i> Không mua</button>
+        <button class="a px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11.5px] font-bold transition" data-a="reset"><i class="fa-regular fa-clock"></i> Chờ gặp</button>
+        <button class="a px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-[11.5px] font-bold transition" data-a="edit"><i class="fa-solid fa-pen"></i> Sửa</button>
+        <button class="a px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 text-[11.5px] font-bold transition" data-a="del"><i class="fa-regular fa-trash-can"></i></button>
+      </div>
+    </div>`}).join(""):`<div class="py-10 text-center">
+      <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i class="fa-regular fa-calendar text-lg"></i></div>
+      <p class="text-sm text-slate-400 font-medium">Chưa có hẹn nào cho ngày này.<br>Tìm máy ở tab <b>Mã Máy &amp; Giá</b>, liên hệ được ai thì thêm vào đây.</p>
+    </div>`;
+  paintIcons($("#view-day"));
+}
+$("#addLead").onclick=()=>{
+  const l={id:"l"+Date.now(),name:$("#l_name").value.trim(),phone:$("#l_phone").value.trim(),time:$("#l_time").value,
+    addr:$("#l_addr").value.trim(),model:$("#l_model").value.trim(),price:$("#l_price").value.trim(),
+    note:$("#l_note").value.trim(),st:"wait"};
+  if(!l.name&&!l.phone&&!l.addr){alert("Nhập ít nhất tên, số điện thoại hoặc địa chỉ.");return}
+  day(CUR).leads.push(l);save();
+  ["l_name","l_phone","l_time","l_addr","l_model","l_price","l_note"].forEach(i=>$("#"+i).value="");
+  drawDay();
+};
+$("#leads").addEventListener("click",e=>{
+  const b=e.target.closest("button.a");if(!b)return;
+  const box=b.closest("[data-id]"),d=day(CUR),l=d.leads.find(x=>x.id===box.dataset.id);if(!l)return;
+  const a=b.dataset.a;
+  if(a==="del"){if(!confirm("Xóa hẹn này?"))return;d.leads=d.leads.filter(x=>x.id!==l.id)}
+  else if(a==="done")l.st=l.st==="done"?"wait":"done";
+  else if(a==="drop")l.st="drop";
+  else if(a==="reset")l.st="wait";
+  else if(a==="edit"){
+    l.name=prompt("Tên người bán:",l.name)??l.name;
+    l.phone=prompt("Số điện thoại:",l.phone)??l.phone;
+    l.time=prompt("Giờ hẹn (HH:MM):",l.time)??l.time;
+    l.addr=prompt("Địa chỉ:",l.addr)??l.addr;
+    l.model=prompt("Máy:",l.model)??l.model;
+    l.price=prompt("Giá chốt (tr):",l.price)??l.price;
+    l.note=prompt("Ghi chú:",l.note)??l.note;
+  }
+  save();drawDay();
+});
+
+/* ============ VIEW 3 ============ */
+function plan(){
+  const d=day(CUR);
+  const leads=d.leads.filter(l=>l.st!=="drop"&&l.time).sort((a,b)=>t2m(a.time)-t2m(b.time));
+  const origin=$("#origin").value.trim()||"Hòa Bình";
+  const travel=+$("#travel").value||90,buf=+$("#buffer").value||0;
+  const lunch=t2m($("#lunch").value),llen=+$("#lunchlen").value||60;
+  const steps=[];
+  if(!leads.length)return{steps,leads,origin};
+  const first=t2m(leads[0].time);
+  steps.push({t:m2t(first-travel-buf),k:"move",h:"Rời "+origin,
+    d:`Đi Hà Nội — khoảng ${Math.floor(travel/60)}h${String(travel%60).padStart(2,"0")}`,ic:"fa-car-side"});
+  steps.push({t:m2t(first-buf),k:"move",h:"Tới Hà Nội",d:"Còn "+buf+" phút trước hẹn đầu tiên",ic:"fa-location-crosshairs"});
+  let lunchDone=lunch===null;
+  leads.forEach(l=>{
+    const m=t2m(l.time);
+    if(!lunchDone&&m>=lunch+llen){steps.push({t:m2t(lunch),k:"rest",h:"Nghỉ ăn trưa",d:llen+" phút",ic:"fa-utensils"});lunchDone=true}
+    steps.push({t:l.time,k:"meet",h:"Gặp "+(l.name||"người bán")+(l.model?" — "+l.model:""),
+      d:[l.addr,l.phone,l.price?fmt(num(l.price))+" tr":"",l.note].filter(Boolean).join(" · "),addr:l.addr,ic:"fa-handshake"});
+  });
+  if(!lunchDone)steps.push({t:m2t(lunch),k:"rest",h:"Nghỉ ăn trưa",d:llen+" phút",ic:"fa-utensils"});
+  const last=t2m(leads[leads.length-1].time)+45;
+  steps.push({t:m2t(last),k:"move",h:"Về "+origin,d:"Dự kiến có mặt khoảng "+m2t(last+travel),ic:"fa-house"});
+  steps.sort((a,b)=>t2m(a.t)-t2m(b.t));
+  return{steps,leads,origin};
+}
+function drawTrip(){
+  const {steps,leads}=plan();
+  $("#trip-date").textContent=vnDate(CUR);
+  $("#trip-sub").textContent=leads.length?leads.length+" điểm hẹn · rời nhà lúc "+(steps[0]?steps[0].t:"--:--"):"Tự tính từ giờ hẹn sớm nhất trong ngày";
+  $("#timeline").innerHTML=steps.length?steps.map(s=>`<div class="tl-step ${s.k==="meet"?"":s.k}">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-[15px] font-black text-slate-800 tabular-nums">${s.t}</span>
+      <i class="fa-solid ${s.ic} text-[11px] ${s.k==="rest"?"text-amber-500":s.k==="move"?"text-slate-400":"text-purple-500"}"></i>
+      <span class="text-[14px] font-bold text-slate-700">${esc(s.h)}</span>
+    </div>
+    ${s.d?`<p class="text-xs font-medium text-slate-500 mt-0.5">${esc(s.d)}${s.addr?` · <a target="_blank" rel="noopener" href="${mapLink(s.addr)}" class="text-indigo-600 font-bold">mở bản đồ</a>`:""}</p>`:""}
+  </div>`).join(""):`<div class="py-8 text-center">
+    <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i class="fa-solid fa-route text-lg"></i></div>
+    <p class="text-sm text-slate-400 font-medium">Chưa có hẹn nào có giờ trong ngày ${esc(CUR)}.<br>Vào tab <b>Lịch Hẹn</b> thêm người bán kèm giờ, lịch trình sẽ tự hiện.</p></div>`;
+  paintIcons($("#view-trip"));
+}
+["origin","travel","buffer","lunch","lunchlen"].forEach(i=>$("#"+i).addEventListener("input",drawTrip));
+function openRoute(){
+  const {leads,origin}=plan();
+  const pts=leads.map(l=>l.addr).filter(Boolean);
+  if(!pts.length){alert("Chưa có địa chỉ hẹn nào để tạo route.");return}
+  const dest=pts[pts.length-1],way=pts.slice(0,-1);
+  let u="https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(dest);
+  if(way.length)u+="&waypoints="+way.map(encodeURIComponent).join("%7C");
+  window.open(u,"_blank","noopener");
+}
+$("#mapRoute").onclick=openRoute;$("#m-route").onclick=openRoute;
+$("#copyPlan").onclick=()=>{
+  const {steps}=plan();
+  const txt=`LỊCH TRÌNH ${vnDate(CUR)}\n`+(day(CUR).note?`Ghi chú: ${day(CUR).note}\n`:"")+"\n"+
+    steps.map(s=>`${s.t}  ${s.h}${s.d?"\n       "+s.d:""}`).join("\n");
+  navigator.clipboard?.writeText(txt).then(()=>flash($("#copyPlan")),()=>prompt("Copy thủ công:",txt));
+};
+
+/* ============ KHỞI ĐỘNG ============ */
+fillBrand();drawList();drawDay();drawTrip();paintIcons();
+</script>
+</body>
+</html>
