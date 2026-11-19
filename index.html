@@ -45,6 +45,13 @@
   input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus{
     outline:none!important;border-color:#8b5cf6!important;box-shadow:0 0 0 3px rgba(139,92,246,.18)!important;
   }
+  /* Đầu popup: dải gradient, chữ trắng */
+  .mh-grad h2, .mh-grad h3, .mh-grad h4{color:#fff!important}
+  .mh-grad p, .mh-grad [class*="text-slate-"]{color:rgba(255,255,255,.8)!important}
+  .mh-grad > div:first-child > div:first-child{background:rgba(255,255,255,.18)!important;color:#fff!important;box-shadow:none!important;border:0!important}
+  .mh-grad > div:first-child > div:first-child i{color:#fff!important}
+  .mh-grad button{color:rgba(255,255,255,.9)!important}
+  .mh-grad button:hover{background:rgba(255,255,255,.15)!important;color:#fff!important}
   .mnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:14px;color:#64748b;font-size:10px;font-weight:700;transition:all .15s}
   .mnav-btn i{font-size:16px}
   .mnav-btn.active{color:#fff;background-image:linear-gradient(135deg,#9333ea,#6366f1);box-shadow:0 8px 18px -10px rgba(124,58,237,.9)}
@@ -279,7 +286,7 @@
           <div>
             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Máy</label>
             <input id="l_model" list="dl_models" placeholder="Chọn / gõ mã máy" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
-            <datalist id="dl_models"></datalist>
+            <datalist id="dl_models"></datalist><datalist id="dl_brands"></datalist>
           </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -439,7 +446,10 @@ const ICONS={
 "house":'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9z"/>',
 "wallet":'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>',
 "chart-line":'<path d="M4 4v16h16"/><path d="M7 15.5l4-4.5 3 3 5-6.5"/>',
-"circle-check":'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>'
+"circle-check":'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>',
+"triangle-exclamation":'<path d="M12 3.5L21 19.5H3L12 3.5z"/><path d="M12 9.5v4.5M12 16.8v.3"/>',
+"box-open":'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>',
+"floppy-disk":'<path d="M4 4h12l4 4v12H4V4z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/>'
 };
 const FA_ALIAS={"fa-brands":1,"fa-solid":1,"fa-regular":1};
 function paintIcons(root){
@@ -452,6 +462,75 @@ function paintIcons(root){
     el.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;display:block">${ICONS[key]}</svg>`;
     el.style.display="inline-flex";el.style.alignItems="center";el.style.justifyContent="center";
   });
+}
+
+/* ============ MODAL & TOAST (đồng bộ A.I Store) ============ */
+const UI=document.createElement("div");
+UI.className="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-[80] flex items-center justify-center p-4 hidden";
+document.body.appendChild(UI);
+let uiResolve=null;
+function closeUI(v){UI.classList.add("hidden");UI.innerHTML="";const r=uiResolve;uiResolve=null;if(r)r(v)}
+UI.addEventListener("click",e=>{if(e.target===UI)closeUI(null)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!UI.classList.contains("hidden"))closeUI(null)});
+
+function uiForm(o){return new Promise(res=>{
+  uiResolve=res;
+  const fs=o.fields.map((f,i)=>`<div class="${f.half?"col-span-1":"col-span-2"}">
+      <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">${esc(f.label)}</label>
+      <input id="uif-${i}" type="${f.type||"text"}" ${f.list?`list="${f.list}"`:""} ${f.mode?`inputmode="${f.mode}"`:""}
+        value="${esc(f.v==null?"":f.v)}" placeholder="${esc(f.ph||"")}"
+        class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
+    </div>`).join("");
+  UI.innerHTML=`<div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
+    <div class="mh-grad bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 px-5 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3 min-w-0">
+        <div class="w-9 h-9 rounded-2xl flex items-center justify-center text-base shrink-0"><i class="fa-solid fa-${o.icon||"pen"}"></i></div>
+        <div class="min-w-0">
+          <h3 class="font-extrabold text-base leading-tight truncate">${esc(o.title)}</h3>
+          <p class="text-[11px] font-medium truncate">${esc(o.sub||"")}</p>
+        </div>
+      </div>
+      <button data-x class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="p-5 grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar">${fs}</div>
+    <div class="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center gap-2.5">
+      <button data-x class="flex-1 py-2.5 px-4 border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition">Hủy Bỏ</button>
+      <button data-ok class="flex-1 py-2.5 px-4 btn-grad text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-${o.okIcon||"check"}"></i><span>${esc(o.ok||"Lưu Lại")}</span></button>
+    </div></div>`;
+  UI.classList.remove("hidden");paintIcons(UI);
+  const f0=UI.querySelector("input");if(f0){f0.focus();try{f0.select()}catch(e){}}
+  const submit=()=>{const out={};o.fields.forEach((f,i)=>out[f.k]=UI.querySelector("#uif-"+i).value.trim());closeUI(out)};
+  UI.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>closeUI(null));
+  UI.querySelector("[data-ok]").onclick=submit;
+  UI.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")submit()}));
+});}
+
+function uiConfirm(o){return new Promise(res=>{
+  uiResolve=res;
+  const dg=o.danger!==false;
+  UI.innerHTML=`<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 p-6 text-center">
+    <div class="w-14 h-14 ${dg?"bg-rose-100 text-rose-600":"bg-indigo-100 text-indigo-600"} rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+      <i class="fa-solid fa-${o.icon||"triangle-exclamation"}"></i></div>
+    <h3 class="font-extrabold text-slate-900 text-base sm:text-lg mb-1">${esc(o.title)}</h3>
+    <p class="text-xs text-slate-500 mb-5 leading-relaxed">${o.msg||""}</p>
+    <div class="flex items-center justify-center space-x-2.5">
+      <button data-x class="flex-1 py-2.5 px-4 border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition">Hủy Bỏ</button>
+      <button data-ok class="flex-1 py-2.5 px-4 ${dg?"bg-rose-600 hover:bg-rose-700":"btn-grad"} text-white rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-${o.okIcon||"trash-can"}"></i><span>${esc(o.ok||"Xác Nhận")}</span></button>
+    </div></div>`;
+  UI.classList.remove("hidden");paintIcons(UI);
+  UI.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>closeUI(false));
+  UI.querySelector("[data-ok]").onclick=()=>closeUI(true);
+});}
+
+function toast(msg,type){
+  const t=document.createElement("div");
+  t.className="fixed z-[90] left-1/2 -translate-x-1/2 bottom-24 md:bottom-8 px-4 py-2.5 rounded-2xl shadow-2xl text-white text-xs font-bold flex items-center gap-2 "+
+    (type==="bad"?"bg-rose-600":type==="warn"?"bg-amber-500":"bg-slate-900");
+  t.innerHTML=`<i class="fa-solid fa-${type?"triangle-exclamation":"circle-check"}"></i><span>${esc(msg)}</span>`;
+  document.body.appendChild(t);paintIcons(t);
+  setTimeout(()=>{t.style.transition="opacity .3s";t.style.opacity="0";setTimeout(()=>t.remove(),320)},2200);
 }
 
 const KEY="sothumay.v1";
@@ -534,39 +613,48 @@ function drawList(){
     </td>
   </tr>`).join(""):`<tr><td colspan="7" class="py-10 text-center text-sm text-slate-400 font-medium">Không có mã nào khớp. Bấm <b>Thêm Mã Máy</b> để thêm.</td></tr>`;
   $("#dl_models").innerHTML=S.models.map(m=>`<option>${esc(m.name)}</option>`).join("");
+  $("#dl_brands").innerHTML=brands().map(b=>`<option>${esc(b)}</option>`).join("");
   paintIcons($("#view-list"));
 }
 ["q","fbrand","fsort"].forEach(i=>$("#"+i).addEventListener("input",drawList));
 $("#fbrand").addEventListener("change",drawList);$("#fsort").addEventListener("change",drawList);
 
-$("#rows").addEventListener("click",e=>{
+$("#rows").addEventListener("click",async e=>{
   const tr=e.target.closest("tr");if(!tr)return;
   const m=S.models.find(x=>x.id===tr.dataset.id);if(!m)return;
   if(e.target.closest(".del")){
-    if(confirm("Xóa "+m.name+" khỏi danh sách?")){S.models=S.models.filter(x=>x.id!==m.id);save();fillBrand();drawList()}
+    const ok=await uiConfirm({title:"Xóa mã máy này?",
+      msg:`Bỏ <b class="font-bold text-rose-600">${esc(m.name)}</b> khỏi danh sách cần thu. Lịch hẹn đã ghi vẫn giữ nguyên.`,
+      ok:"Xác Nhận Xóa"});
+    if(ok){S.models=S.models.filter(x=>x.id!==m.id);save();fillBrand();drawList();toast("Đã xóa "+m.name)}
     return;
   }
-  const c=e.target.closest(".cell-edit");
-  if(c){
-    const lbl={bl:"giá nhập thấp",bh:"giá nhập cao",sl:"giá bán thấp",sh:"giá bán cao"}[c.dataset.k];
-    const v=prompt(m.name+" — "+lbl+" (triệu đồng):",fmt(m[c.dataset.k]));
-    if(v!==null){m[c.dataset.k]=num(v);save();drawList()}
+  if(e.target.closest(".cell-edit")){
+    const r=await uiForm({title:m.name,sub:"Sửa khoảng giá — đơn vị: triệu đồng",icon:"mobile-screen-button",ok:"Lưu Giá",okIcon:"floppy-disk",
+      fields:[{k:"bl",label:"Giá nhập thấp",v:fmt(m.bl),half:1,mode:"decimal"},{k:"bh",label:"Giá nhập cao",v:fmt(m.bh),half:1,mode:"decimal"},
+              {k:"sl",label:"Giá bán thấp",v:fmt(m.sl),half:1,mode:"decimal"},{k:"sh",label:"Giá bán cao",v:fmt(m.sh),half:1,mode:"decimal"}]});
+    if(r){["bl","bh","sl","sh"].forEach(k=>m[k]=num(r[k]));save();drawList();toast("Đã cập nhật giá "+m.name)}
   }
 });
-$("#btn-add-model").onclick=()=>{
-  const name=prompt("Tên mã máy:");if(!name)return;
-  const brand=prompt("Hãng:",name.split(" ")[0])||"Khác";
-  const bl=num(prompt("Giá nhập thấp (tr):","0")),bh=num(prompt("Giá nhập cao (tr):",String(bl)));
-  const sl=num(prompt("Giá bán thấp (tr):",String(bh))),sh=num(prompt("Giá bán cao (tr):",String(sl)));
-  S.models.push({id:"m"+Date.now(),brand,name,bl,bh,sl,sh});save();fillBrand();drawList();
+$("#btn-add-model").onclick=async()=>{
+  const r=await uiForm({title:"Thêm Mã Máy Mới",sub:"Máy cần tìm thu — đơn vị giá: triệu đồng",icon:"box-open",ok:"Thêm Vào Danh Sách",okIcon:"plus",
+    fields:[{k:"name",label:"Tên mã máy",ph:"vd: Redmi Note 14 Pro"},
+            {k:"brand",label:"Hãng",ph:"vd: Xiaomi",list:"dl_brands"},
+            {k:"bl",label:"Giá nhập thấp",half:1,mode:"decimal",ph:"0"},{k:"bh",label:"Giá nhập cao",half:1,mode:"decimal",ph:"0"},
+            {k:"sl",label:"Giá bán thấp",half:1,mode:"decimal",ph:"0"},{k:"sh",label:"Giá bán cao",half:1,mode:"decimal",ph:"0"}]});
+  if(!r)return;
+  if(!r.name){toast("Chưa nhập tên mã máy","bad");return}
+  S.models.push({id:"m"+Date.now(),brand:r.brand||"Khác",name:r.name,bl:num(r.bl),bh:num(r.bh),sl:num(r.sl),sh:num(r.sh)});
+  save();fillBrand();drawList();toast("Đã thêm "+r.name);
 };
-$("#btn-reset").onclick=()=>{
-  if(confirm("Đặt lại toàn bộ bảng giá về mặc định? Giá anh đã sửa sẽ mất, lịch hẹn vẫn giữ."))
-  {S.models=fresh();save();fillBrand();drawList()}
+$("#btn-reset").onclick=async()=>{
+  const ok=await uiConfirm({title:"Đặt lại bảng giá mặc định?",icon:"rotate-left",ok:"Đặt Lại",okIcon:"rotate-left",
+    msg:"Toàn bộ giá đã sửa và mã máy tự thêm sẽ mất. <b class='font-bold text-slate-700'>Lịch hẹn vẫn được giữ nguyên.</b>"});
+  if(ok){S.models=fresh();save();fillBrand();drawList();toast("Đã đặt lại bảng giá")}
 };
 $("#btn-copy-list").onclick=()=>{
   const txt=filtered().map(m=>`${m.name}: nhập ${fmt(m.bl)}–${fmt(m.bh)} / bán ${fmt(m.sl)}–${fmt(m.sh)} tr`).join("\n");
-  navigator.clipboard?.writeText(txt).then(()=>flash($("#btn-copy-list")),()=>prompt("Copy thủ công:",txt));
+  navigator.clipboard?.writeText(txt).then(()=>{flash($("#btn-copy-list"));toast("Đã copy "+filtered().length+" mã máy")},()=>toast("Trình duyệt chặn copy","bad"));
 };
 function flash(btn){const h=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check text-emerald-600"></i><span class="hidden sm:inline">Đã copy</span>';paintIcons(btn);setTimeout(()=>{btn.innerHTML=h;paintIcons(btn)},1600)}
 
@@ -648,29 +736,36 @@ $("#addLead").onclick=()=>{
   const l={id:"l"+Date.now(),name:$("#l_name").value.trim(),phone:$("#l_phone").value.trim(),time:$("#l_time").value,
     addr:$("#l_addr").value.trim(),model:$("#l_model").value.trim(),price:$("#l_price").value.trim(),
     note:$("#l_note").value.trim(),st:"wait"};
-  if(!l.name&&!l.phone&&!l.addr){alert("Nhập ít nhất tên, số điện thoại hoặc địa chỉ.");return}
+  if(!l.name&&!l.phone&&!l.addr){toast("Nhập ít nhất tên, số điện thoại hoặc địa chỉ","bad");return}
   day(CUR).leads.push(l);save();
   ["l_name","l_phone","l_time","l_addr","l_model","l_price","l_note"].forEach(i=>$("#"+i).value="");
-  drawDay();
+  drawDay();toast("Đã thêm hẹn"+(l.time?" lúc "+l.time:""));
 };
-$("#leads").addEventListener("click",e=>{
+$("#leads").addEventListener("click",async e=>{
   const b=e.target.closest("button.a");if(!b)return;
   const box=b.closest("[data-id]"),d=day(CUR),l=d.leads.find(x=>x.id===box.dataset.id);if(!l)return;
   const a=b.dataset.a;
-  if(a==="del"){if(!confirm("Xóa hẹn này?"))return;d.leads=d.leads.filter(x=>x.id!==l.id)}
-  else if(a==="done")l.st=l.st==="done"?"wait":"done";
+  if(a==="del"){
+    const ok=await uiConfirm({title:"Xóa cuộc hẹn này?",
+      msg:`Xóa hẹn với <b class="font-bold text-rose-600">${esc(l.name||"người bán")}</b>${l.time?" lúc "+esc(l.time):""}. Không khôi phục lại được.`,
+      ok:"Xác Nhận Xóa"});
+    if(!ok)return;
+    d.leads=d.leads.filter(x=>x.id!==l.id);save();drawDay();drawTrip();toast("Đã xóa cuộc hẹn");return;
+  }
+  if(a==="edit"){
+    const r=await uiForm({title:"Sửa Cuộc Hẹn",sub:l.name||"Người bán",icon:"pen",ok:"Lưu Thay Đổi",okIcon:"floppy-disk",
+      fields:[{k:"name",label:"Tên người bán",half:1,v:l.name},{k:"phone",label:"Số điện thoại",half:1,v:l.phone,mode:"tel"},
+              {k:"time",label:"Giờ hẹn",half:1,v:l.time,type:"time"},{k:"price",label:"Giá chốt (tr)",half:1,v:l.price,mode:"decimal"},
+              {k:"model",label:"Máy",v:l.model,list:"dl_models"},
+              {k:"addr",label:"Địa chỉ hẹn gặp",v:l.addr},
+              {k:"note",label:"Ghi chú",v:l.note}]});
+    if(!r)return;
+    Object.assign(l,r);save();drawDay();drawTrip();toast("Đã lưu thay đổi");return;
+  }
+  if(a==="done")l.st=l.st==="done"?"wait":"done";
   else if(a==="drop")l.st="drop";
   else if(a==="reset")l.st="wait";
-  else if(a==="edit"){
-    l.name=prompt("Tên người bán:",l.name)??l.name;
-    l.phone=prompt("Số điện thoại:",l.phone)??l.phone;
-    l.time=prompt("Giờ hẹn (HH:MM):",l.time)??l.time;
-    l.addr=prompt("Địa chỉ:",l.addr)??l.addr;
-    l.model=prompt("Máy:",l.model)??l.model;
-    l.price=prompt("Giá chốt (tr):",l.price)??l.price;
-    l.note=prompt("Ghi chú:",l.note)??l.note;
-  }
-  save();drawDay();
+  save();drawDay();drawTrip();
 });
 
 /* ============ VIEW 3 ============ */
@@ -719,7 +814,7 @@ function drawTrip(){
 function openRoute(){
   const {leads,origin}=plan();
   const pts=leads.map(l=>l.addr).filter(Boolean);
-  if(!pts.length){alert("Chưa có địa chỉ hẹn nào để tạo route.");return}
+  if(!pts.length){toast("Chưa có địa chỉ hẹn nào để tạo route","warn");return}
   const dest=pts[pts.length-1],way=pts.slice(0,-1);
   let u="https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(dest);
   if(way.length)u+="&waypoints="+way.map(encodeURIComponent).join("%7C");
@@ -730,7 +825,7 @@ $("#copyPlan").onclick=()=>{
   const {steps}=plan();
   const txt=`LỊCH TRÌNH ${vnDate(CUR)}\n`+(day(CUR).note?`Ghi chú: ${day(CUR).note}\n`:"")+"\n"+
     steps.map(s=>`${s.t}  ${s.h}${s.d?"\n       "+s.d:""}`).join("\n");
-  navigator.clipboard?.writeText(txt).then(()=>flash($("#copyPlan")),()=>prompt("Copy thủ công:",txt));
+  navigator.clipboard?.writeText(txt).then(()=>{flash($("#copyPlan"));toast("Đã copy lịch trình")},()=>toast("Trình duyệt chặn copy","bad"));
 };
 
 /* ============ KHỞI ĐỘNG ============ */
