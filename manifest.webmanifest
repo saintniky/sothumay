@@ -1,0 +1,19 @@
+{
+  "name": "Sổ Thu Máy - Điều Hành Thu Mua Điện Thoại",
+  "short_name": "Sổ Thu Máy",
+  "description": "Danh sách mã máy cần thu, khoảng giá nhập - bán, lịch hẹn người bán và lịch trình di chuyển trong ngày",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7fb",
+  "theme_color": "#7c3aed",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

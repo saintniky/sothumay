@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sổ Thu Máy - Điều Hành Thu Mua Điện Thoại Cũ</title>
+<!-- Cài như ứng dụng (PWA) trên Android / iPhone / Windows -->
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#7c3aed">
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sổ Thu Máy">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- Icon: bộ SVG nội tuyến, dùng chung cách viết class fa-* như A.I Store.
@@ -69,13 +78,30 @@
   .tl-step::before{content:"";position:absolute;left:-26px;top:5px;width:12px;height:12px;border-radius:50%;background:#7c3aed;border:2px solid #fff;box-shadow:0 0 0 2px rgba(124,58,237,.25)}
   .tl-step.rest::before{background:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
   .tl-step.move::before{background:#94a3b8;box-shadow:0 0 0 2px rgba(148,163,184,.25)}
-  @media (max-width:767px){ main table.text-sm{min-width:620px} }
+  /* ===== Tối ưu cho điện thoại ===== */
+  .safe-top{padding-top:max(8px,env(safe-area-inset-top))}
+  @media (max-width:767px){
+    body{font-size:15px}
+    input,select,textarea{font-size:16px!important}      /* iPhone không tự phóng to khi gõ */
+    .page-icon{width:38px;height:38px;border-radius:12px;font-size:16px}
+    .page-title{font-size:15.5px}
+    .section-head{padding:10px 13px}
+    main .bg-white.rounded-2xl{border-radius:18px}
+    .mobile-card{-webkit-tap-highlight-color:transparent}
+  }
+  /* popup trên điện thoại: trượt lên từ đáy */
+  @media (max-width:640px){
+    #ui-wrap{align-items:flex-end!important;padding:0!important}
+    #ui-wrap > div{border-radius:26px 26px 0 0!important;max-height:92vh;animation:sheetUp .22s ease-out}
+    #ui-wrap > div.sheet-mid{border-radius:26px!important;margin:0 14px 14px}
+  }
+  @keyframes sheetUp{from{transform:translateY(22px);opacity:.6}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body class="app-bg text-slate-800 min-h-screen flex flex-col md:flex-row selection:bg-indigo-500 selection:text-white">
 
 <!-- ================= SIDEBAR ================= -->
-<aside class="hidden md:flex md:w-56 lg:w-60 bg-white/95 backdrop-blur border-r border-slate-200/80 shrink-0 flex-col h-screen sticky top-0 z-30 shadow-[2px_0_12px_rgba(0,0,0,0.03)]">
+<aside class="hidden md:flex md:w-56 lg:w-60 bg-white/95 backdrop-blur border border-slate-200/80 rounded-3xl shrink-0 flex-col h-[calc(100vh-1.5rem)] sticky top-3 ml-3 my-3 z-30 overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04),0_14px_34px_-20px_rgba(79,70,229,0.45)]">
   <div class="p-3 md:p-3.5 flex-1 flex flex-col space-y-3 overflow-y-auto custom-scrollbar">
 
     <div class="flex items-center space-x-2.5 pb-2.5 border-b border-slate-100 shrink-0">
@@ -116,14 +142,17 @@
       </button>
     </div>
 
-    <div class="pt-2.5 border-t border-slate-100 shrink-0">
+    <div class="pt-2.5 border-t border-slate-100 shrink-0 space-y-2">
+      <button id="btn-install-app" class="hidden w-full items-center justify-center gap-2 px-2.5 py-2 rounded-xl btn-grad text-white text-xs font-bold transition">
+        <i class="fa-solid fa-download text-[11px]"></i><span>Cài ứng dụng</span>
+      </button>
       <p class="text-[10px] text-slate-400 font-medium leading-snug">Dữ liệu lưu ngay trên máy anh (localStorage). Giá là giá tham khảo — bấm vào để sửa.</p>
     </div>
   </div>
 </aside>
 
 <!-- ================= HEADER ĐIỆN THOẠI ================= -->
-<header class="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 px-3 py-2 flex items-center gap-2">
+<header class="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 px-3 py-2 safe-top flex items-center gap-2">
   <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center shrink-0">
     <i class="fa-solid fa-cart-flatbed-suitcase text-sm"></i>
   </div>
@@ -131,7 +160,8 @@
     <h1 class="font-black text-sm tracking-tight text-slate-900 truncate">Sổ <span class="text-rose-500">Thu Máy</span></h1>
     <p class="text-[10px] text-slate-400 font-medium truncate" id="m-date">—</p>
   </div>
-  <button id="m-route" class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center" title="Mở route Google Maps"><i class="fa-solid fa-map-location-dot text-sm"></i></button>
+  <button id="m-btn-install" class="hidden w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 items-center justify-center" title="Cài ứng dụng"><i class="fa-solid fa-download text-sm"></i></button>
+  <button id="m-route" class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center" title="Mở route Google Maps"><i class="fa-solid fa-map-location-dot text-sm"></i></button>
 </header>
 
 <!-- ================= NAV DƯỚI (điện thoại) ================= -->
@@ -156,12 +186,6 @@
         </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap md:justify-end">
-        <button id="btn-copy-list" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5">
-          <i class="fa-regular fa-copy text-emerald-600"></i><span class="hidden sm:inline">Copy list</span>
-        </button>
-        <button id="btn-reset" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5">
-          <i class="fa-solid fa-rotate-left text-slate-500"></i><span class="hidden sm:inline">Giá mặc định</span>
-        </button>
         <button id="btn-add-model" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
           <i class="fa-solid fa-plus"></i><span>Thêm Mã Máy</span>
         </button>
@@ -197,7 +221,7 @@
         </div>
         <span class="text-[10.5px] font-bold text-slate-400 hidden sm:block">Đơn vị: triệu đồng</span>
       </div>
-      <div class="overflow-x-auto custom-scrollbar">
+      <div class="hidden md:block overflow-x-auto custom-scrollbar">
         <table class="w-full text-left text-sm border-collapse">
           <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-bold tracking-wider select-none">
             <tr>
@@ -207,12 +231,13 @@
               <th class="py-3.5 px-4 whitespace-nowrap">Giá Bán Ra</th>
               <th class="py-3.5 px-4 whitespace-nowrap hidden lg:table-cell">Lãi Dự Kiến</th>
               <th class="py-3.5 px-4 text-center whitespace-nowrap">Tìm Trên Facebook</th>
-              <th class="py-3.5 px-3 text-center w-14"></th>
+              <th class="py-3.5 px-3 text-center w-24">Sửa</th>
             </tr>
           </thead>
           <tbody id="rows" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
+      <div id="cards" class="md:hidden divide-y divide-slate-100"></div>
     </div>
 
     <div class="bg-white p-4 rounded-2xl border shadow-sm flex items-start gap-3">
@@ -269,9 +294,9 @@
             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Số điện thoại</label>
             <input id="l_phone" inputmode="tel" placeholder="09xx xxx xxx" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
           </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Giờ hẹn</label>
-            <input type="time" id="l_time" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
+          <div class="col-span-2 lg:col-span-1">
+            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ngày &amp; giờ hẹn</label>
+            <input type="datetime-local" id="l_time" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-bold">
           </div>
           <div>
             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Giá chốt (tr)</label>
@@ -383,11 +408,11 @@ const SEED=[
 ["Honor","Honor X9b",3.4,4.2,4.9,5.8],["Honor","Honor 90 Lite",2.3,2.9,3.4,4.1],
 ["Honor","Honor 90",4.5,5.5,6.3,7.4],["Honor","Honor 200 Lite",3.6,4.3,5.0,5.9],
 ["Honor","Honor 200",6.0,7.2,8.2,9.6],["Honor","Honor Magic6 Lite",3.8,4.6,5.3,6.3],
-["Xiaomi","Redmi 12",1.5,1.9,2.3,2.8],["Xiaomi","Redmi 13",1.9,2.4,2.9,3.5],
-["Xiaomi","Redmi 13C",1.4,1.8,2.2,2.7],["Xiaomi","Redmi 14C",1.8,2.3,2.8,3.4],
-["Xiaomi","Redmi Note 12",2.1,2.6,3.1,3.7],["Xiaomi","Redmi Note 13",2.7,3.3,3.9,4.6],
-["Xiaomi","Redmi Note 13 Pro",3.8,4.6,5.3,6.2],["Xiaomi","Redmi Note 14",3.2,3.9,4.6,5.4],
-["Xiaomi","Redmi Note 14 Pro",4.4,5.3,6.1,7.1],["Xiaomi","Xiaomi 13T",5.5,6.6,7.5,8.8],
+["Redmi","Redmi 12",1.5,1.9,2.3,2.8],["Redmi","Redmi 13",1.9,2.4,2.9,3.5],
+["Redmi","Redmi 13C",1.4,1.8,2.2,2.7],["Redmi","Redmi 14C",1.8,2.3,2.8,3.4],
+["Redmi","Redmi Note 12",2.1,2.6,3.1,3.7],["Redmi","Redmi Note 13",2.7,3.3,3.9,4.6],
+["Redmi","Redmi Note 13 Pro",3.8,4.6,5.3,6.2],["Redmi","Redmi Note 14",3.2,3.9,4.6,5.4],
+["Redmi","Redmi Note 14 Pro",4.4,5.3,6.1,7.1],["Xiaomi","Xiaomi 13T",5.5,6.6,7.5,8.8],
 ["Xiaomi","Xiaomi 14T",7.5,8.8,9.9,11.5],["POCO","Poco M6 Pro",2.6,3.2,3.8,4.5],
 ["POCO","Poco X6",4.2,5.0,5.8,6.8],["POCO","Poco F6",6.2,7.4,8.4,9.8],
 ["Vivo","vivo Y18",1.5,1.9,2.3,2.8],["Vivo","vivo Y28",2.2,2.7,3.2,3.9],
@@ -406,9 +431,16 @@ const SEED=[
 ["Realme","Realme C65",2.0,2.5,3.0,3.6],["Realme","Realme Note 50",1.2,1.6,2.0,2.5],
 ["Realme","Realme Note 60",1.7,2.1,2.6,3.2],["Realme","Realme 11",2.8,3.4,4.0,4.8],
 ["Realme","Realme 12",3.3,4.0,4.7,5.6],["Realme","Realme 12+",4.0,4.8,5.5,6.5],
-["Realme","Realme 13+",4.8,5.7,6.5,7.6],["Realme","Realme GT6",7.0,8.3,9.4,11.0]
+["Realme","Realme 13+",4.8,5.7,6.5,7.6],["Realme","Realme GT6",7.0,8.3,9.4,11.0],
+["Samsung","Galaxy A05",1.2,1.6,2.0,2.5],["Samsung","Galaxy A06",1.6,2.0,2.5,3.1],
+["Samsung","Galaxy A15",2.2,2.8,3.3,4.0],["Samsung","Galaxy A16",2.6,3.2,3.8,4.5],
+["Samsung","Galaxy A25",3.4,4.1,4.8,5.7],["Samsung","Galaxy A35",4.8,5.7,6.5,7.6],
+["Samsung","Galaxy A55",6.3,7.5,8.5,9.9],["Samsung","Galaxy M35",4.0,4.8,5.5,6.5]
 ];
+const BRANDS=["Honor","Xiaomi","Redmi","POCO","Vivo","iQOO","OPPO","Realme","Samsung"];
+const BRAND_OTHER="Khác (tự điền)";
 const BRAND_STYLE={Honor:"bg-sky-50 text-sky-700 border-sky-200",Xiaomi:"bg-orange-50 text-orange-700 border-orange-200",
+Redmi:"bg-orange-50 text-orange-700 border-orange-200",Samsung:"bg-blue-50 text-blue-700 border-blue-200",
 POCO:"bg-amber-50 text-amber-700 border-amber-200",Vivo:"bg-indigo-50 text-indigo-700 border-indigo-200",
 iQOO:"bg-violet-50 text-violet-700 border-violet-200",OPPO:"bg-emerald-50 text-emerald-700 border-emerald-200",
 Realme:"bg-yellow-50 text-yellow-700 border-yellow-200"};
@@ -447,6 +479,7 @@ const ICONS={
 "wallet":'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>',
 "chart-line":'<path d="M4 4v16h16"/><path d="M7 15.5l4-4.5 3 3 5-6.5"/>',
 "circle-check":'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>',
+"download":'<path d="M12 3v12M7.5 11l4.5 4.5 4.5-4.5M4 20h16"/>',
 "triangle-exclamation":'<path d="M12 3.5L21 19.5H3L12 3.5z"/><path d="M12 9.5v4.5M12 16.8v.3"/>',
 "box-open":'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>',
 "floppy-disk":'<path d="M4 4h12l4 4v12H4V4z"/><path d="M8 4v6h8V4M8 20v-6h8v6"/>'
@@ -466,6 +499,7 @@ function paintIcons(root){
 
 /* ============ MODAL & TOAST (đồng bộ A.I Store) ============ */
 const UI=document.createElement("div");
+UI.id="ui-wrap";
 UI.className="fixed inset-0 bg-slate-900/50 backdrop-blur-md z-[80] flex items-center justify-center p-4 hidden";
 document.body.appendChild(UI);
 let uiResolve=null;
@@ -475,12 +509,27 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!UI.classList.conta
 
 function uiForm(o){return new Promise(res=>{
   uiResolve=res;
-  const fs=o.fields.map((f,i)=>`<div class="${f.half?"col-span-1":"col-span-2"}">
+  const INP="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium";
+  const fs=o.fields.map((f,i)=>{
+    let body;
+    if(f.type==="brand"){
+      const known=BRANDS.includes(f.v);
+      const cur=f.v?(known?f.v:BRAND_OTHER):BRANDS[0];
+      body=`<select id="uif-${i}" class="${INP} text-slate-700">
+          ${BRANDS.map(b=>`<option${b===cur?" selected":""}>${esc(b)}</option>`).join("")}
+          <option${cur===BRAND_OTHER?" selected":""}>${BRAND_OTHER}</option>
+        </select>
+        <input id="uif-${i}-o" placeholder="Nhập tên hãng" value="${esc(known?"":(f.v||""))}"
+          class="${INP} mt-2 ${cur===BRAND_OTHER?"":"hidden"}">`;
+    }else{
+      body=`<input id="uif-${i}" type="${f.type||"text"}" ${f.list?`list="${f.list}"`:""} ${f.mode?`inputmode="${f.mode}"`:""}
+        value="${esc(f.v==null?"":f.v)}" placeholder="${esc(f.ph||"")}" class="${INP}">`;
+    }
+    return `<div class="${f.half?"col-span-1":"col-span-2"}">
       <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">${esc(f.label)}</label>
-      <input id="uif-${i}" type="${f.type||"text"}" ${f.list?`list="${f.list}"`:""} ${f.mode?`inputmode="${f.mode}"`:""}
-        value="${esc(f.v==null?"":f.v)}" placeholder="${esc(f.ph||"")}"
-        class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
-    </div>`).join("");
+      ${body}
+    </div>`;
+  }).join("");
   UI.innerHTML=`<div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
     <div class="mh-grad bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 px-5 py-4 flex justify-between items-center">
       <div class="flex items-center space-x-3 min-w-0">
@@ -499,8 +548,21 @@ function uiForm(o){return new Promise(res=>{
         <i class="fa-solid fa-${o.okIcon||"check"}"></i><span>${esc(o.ok||"Lưu Lại")}</span></button>
     </div></div>`;
   UI.classList.remove("hidden");paintIcons(UI);
-  const f0=UI.querySelector("input");if(f0){f0.focus();try{f0.select()}catch(e){}}
-  const submit=()=>{const out={};o.fields.forEach((f,i)=>out[f.k]=UI.querySelector("#uif-"+i).value.trim());closeUI(out)};
+  const f0=UI.querySelector("input,select");if(f0){f0.focus();try{f0.select()}catch(e){}}
+  o.fields.forEach((f,i)=>{
+    if(f.type!=="brand")return;
+    const sel=UI.querySelector("#uif-"+i),oth=UI.querySelector("#uif-"+i+"-o");
+    sel.onchange=()=>{const on=sel.value===BRAND_OTHER;oth.classList.toggle("hidden",!on);if(on)oth.focus()};
+  });
+  const submit=()=>{
+    const out={};
+    o.fields.forEach((f,i)=>{
+      let v=UI.querySelector("#uif-"+i).value.trim();
+      if(f.type==="brand"&&v===BRAND_OTHER)v=UI.querySelector("#uif-"+i+"-o").value.trim()||"Khác";
+      out[f.k]=v;
+    });
+    closeUI(out);
+  };
   UI.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>closeUI(null));
   UI.querySelector("[data-ok]").onclick=submit;
   UI.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")submit()}));
@@ -509,7 +571,7 @@ function uiForm(o){return new Promise(res=>{
 function uiConfirm(o){return new Promise(res=>{
   uiResolve=res;
   const dg=o.danger!==false;
-  UI.innerHTML=`<div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 p-6 text-center">
+  UI.innerHTML=`<div class="sheet-mid bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 p-6 text-center">
     <div class="w-14 h-14 ${dg?"bg-rose-100 text-rose-600":"bg-indigo-100 text-indigo-600"} rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
       <i class="fa-solid fa-${o.icon||"triangle-exclamation"}"></i></div>
     <h3 class="font-extrabold text-slate-900 text-base sm:text-lg mb-1">${esc(o.title)}</h3>
@@ -550,6 +612,9 @@ const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezone
 let CUR=todayISO();
 const vnDate=iso=>{const p=iso.split("-");return new Date(p[0],p[1]-1,p[2]).toLocaleDateString("vi-VN",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"})};
 const mapLink=a=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a);
+const dmy=iso=>{const p=String(iso).split("-");return p[2]+"/"+p[1]};
+const splitDT=v=>{const p=String(v||"").split("T");return p[1]?{d:p[0],t:p[1].slice(0,5)}:{d:CUR,t:""}};
+function resetDT(){$("#l_time").value=CUR+"T09:00"}
 
 /* ============ ĐIỀU HƯỚNG ============ */
 function go(tab){
@@ -565,20 +630,31 @@ function go(tab){
 document.querySelectorAll(".nav-btn,.mnav-btn").forEach(b=>b.onclick=()=>go(b.dataset.tab));
 
 /* ============ VIEW 1 ============ */
-const brands=()=>[...new Set(S.models.map(m=>m.brand))].sort();
+const brands=()=>{
+  const have=[...new Set(S.models.map(m=>m.brand))];
+  return BRANDS.filter(b=>have.includes(b)).concat(have.filter(b=>!BRANDS.includes(b)).sort());
+};
 function fillBrand(){
   const cur=$("#fbrand").value;
   $("#fbrand").innerHTML='<option value="">Tất cả hãng</option>'+brands().map(b=>`<option${b===cur?" selected":""}>${esc(b)}</option>`).join("");
 }
-function fbBtns(name){
+function fullName(m){
+  const n=String(m.name||"").trim(),b=String(m.brand||"").trim();
+  if(!b||b==="Khác")return n;
+  return n.toLowerCase().startsWith(b.toLowerCase())?n:b+" "+n;
+}
+function fbBtns(m,big){
+  const name=fullName(m);
   const q=encodeURIComponent(name+" cũ");
-  return `<div class="flex items-center justify-center gap-1.5">
-    <a target="_blank" rel="noopener" title="Marketplace Hà Nội" href="https://www.facebook.com/marketplace/hanoi/search/?query=${encodeURIComponent(name)}"
-      class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition"><i class="fa-solid fa-store text-[11px]"></i></a>
-    <a target="_blank" rel="noopener" title="Tìm bài viết trên Facebook" href="https://www.facebook.com/search/posts/?q=${q}"
-      class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition"><i class="fa-solid fa-newspaper text-[11px]"></i></a>
-    <a target="_blank" rel="noopener" title="Tìm trong group thanh lý" href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(name+" thanh lý")}"
-      class="w-8 h-8 rounded-lg bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition"><i class="fa-solid fa-users text-[11px]"></i></a>
+  const sz=big?"flex-1 h-10 gap-1.5 text-[11.5px] font-bold":"w-8 h-8";
+  const lbl=big?1:0;
+  return `<div class="flex items-center ${big?"":"justify-center"} gap-1.5">
+    <a data-fb target="_blank" rel="noopener" title="Marketplace Hà Nội" href="https://www.facebook.com/marketplace/hanoi/search/?query=${encodeURIComponent(name)}"
+      class="${sz} rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition"><i class="fa-solid fa-store text-[11px]"></i>${lbl?"<span>Chợ</span>":""}</a>
+    <a data-fb target="_blank" rel="noopener" title="Tìm bài viết trên Facebook" href="https://www.facebook.com/search/posts/?q=${q}"
+      class="${sz} rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition"><i class="fa-solid fa-newspaper text-[11px]"></i>${lbl?"<span>Bài viết</span>":""}</a>
+    <a data-fb target="_blank" rel="noopener" title="Tìm trong group thanh lý" href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(name+" thanh lý")}"
+      class="${sz} rounded-lg bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition"><i class="fa-solid fa-users text-[11px]"></i>${lbl?"<span>Group</span>":""}</a>
   </div>`;
 }
 function filtered(){
@@ -607,11 +683,35 @@ function drawList(){
       <span class="cell-edit" data-k="sl">${fmt(m.sl)}</span> – <span class="cell-edit" data-k="sh">${fmt(m.sh)}</span>
     </td>
     <td class="py-3 px-4 whitespace-nowrap hidden lg:table-cell text-xs font-bold text-slate-500">+${fmt(m.sl-m.bh)} → +${fmt(m.sh-m.bl)}</td>
-    <td class="py-3 px-4">${fbBtns(m.name)}</td>
-    <td class="py-3 px-3 text-center">
-      <button class="del w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100 transition" title="Xóa mã này"><i class="fa-regular fa-trash-can text-[11px]"></i></button>
+    <td class="py-3 px-4">${fbBtns(m)}</td>
+    <td class="py-3 px-3">
+      <div class="flex items-center justify-center gap-1.5">
+        <button class="edit w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition" title="Sửa mã máy & giá"><i class="fa-solid fa-pen text-[11px]"></i></button>
+        <button class="del w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100 transition" title="Xóa mã này"><i class="fa-regular fa-trash-can text-[11px]"></i></button>
+      </div>
     </td>
   </tr>`).join(""):`<tr><td colspan="7" class="py-10 text-center text-sm text-slate-400 font-medium">Không có mã nào khớp. Bấm <b>Thêm Mã Máy</b> để thêm.</td></tr>`;
+  $("#cards").innerHTML=l.length?l.map(m=>`<div class="mobile-card p-3.5" data-id="${m.id}">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0">
+        <span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${BRAND_STYLE[m.brand]||"bg-slate-50 text-slate-600 border-slate-200"} uppercase">${esc(m.brand)}</span>
+        <div class="font-black text-slate-800 text-[15px] mt-1">${esc(m.name)}</div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button class="edit w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center" title="Sửa"><i class="fa-solid fa-pen text-xs"></i></button>
+        <button class="del w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center" title="Xóa"><i class="fa-regular fa-trash-can text-xs"></i></button>
+      </div>
+    </div>
+    <div class="flex items-center gap-4 mt-2.5">
+      <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nhập</p>
+        <p class="cell-edit font-black text-emerald-600 text-[15px]">${fmt(m.bl)} – ${fmt(m.bh)}</p></div>
+      <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bán ra</p>
+        <p class="cell-edit font-black text-indigo-600 text-[15px]">${fmt(m.sl)} – ${fmt(m.sh)}</p></div>
+      <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lãi</p>
+        <p class="font-bold text-slate-500 text-[13px]">+${fmt(m.sl-m.bh)}→+${fmt(m.sh-m.bl)}</p></div>
+    </div>
+    <div class="mt-3">${fbBtns(m,true)}</div>
+  </div>`).join(""):`<div class="py-10 text-center text-sm text-slate-400 font-medium">Không có mã nào khớp.</div>`;
   $("#dl_models").innerHTML=S.models.map(m=>`<option>${esc(m.name)}</option>`).join("");
   $("#dl_brands").innerHTML=brands().map(b=>`<option>${esc(b)}</option>`).join("");
   paintIcons($("#view-list"));
@@ -619,9 +719,15 @@ function drawList(){
 ["q","fbrand","fsort"].forEach(i=>$("#"+i).addEventListener("input",drawList));
 $("#fbrand").addEventListener("change",drawList);$("#fsort").addEventListener("change",drawList);
 
-$("#rows").addEventListener("click",async e=>{
-  const tr=e.target.closest("tr");if(!tr)return;
+async function onModelClick(e){
+  const tr=e.target.closest("[data-id]");if(!tr)return;
   const m=S.models.find(x=>x.id===tr.dataset.id);if(!m)return;
+  if(e.target.closest("a[data-fb]")){
+    const fn=fullName(m);
+    try{navigator.clipboard?.writeText(fn)}catch(err){}
+    toast('Đã copy "'+fn+'"');
+    return;
+  }
   if(e.target.closest(".del")){
     const ok=await uiConfirm({title:"Xóa mã máy này?",
       msg:`Bỏ <b class="font-bold text-rose-600">${esc(m.name)}</b> khỏi danh sách cần thu. Lịch hẹn đã ghi vẫn giữ nguyên.`,
@@ -629,17 +735,30 @@ $("#rows").addEventListener("click",async e=>{
     if(ok){S.models=S.models.filter(x=>x.id!==m.id);save();fillBrand();drawList();toast("Đã xóa "+m.name)}
     return;
   }
+  if(e.target.closest(".edit")){
+    const r=await uiForm({title:"Sửa Mã Máy",sub:m.name+" — đơn vị giá: triệu đồng",icon:"pen",ok:"Lưu Thay Đổi",okIcon:"floppy-disk",
+      fields:[{k:"brand",label:"Hãng",v:m.brand,type:"brand",half:1},
+              {k:"name",label:"Tên mã máy",v:m.name,half:1},
+              {k:"bl",label:"Giá nhập thấp",v:fmt(m.bl),half:1,mode:"decimal"},{k:"bh",label:"Giá nhập cao",v:fmt(m.bh),half:1,mode:"decimal"},
+              {k:"sl",label:"Giá bán thấp",v:fmt(m.sl),half:1,mode:"decimal"},{k:"sh",label:"Giá bán cao",v:fmt(m.sh),half:1,mode:"decimal"}]});
+    if(!r)return;
+    if(!r.name){toast("Chưa nhập tên mã máy","bad");return}
+    m.name=r.name;m.brand=r.brand||"Khác";["bl","bh","sl","sh"].forEach(k=>m[k]=num(r[k]));
+    save();fillBrand();drawList();toast("Đã lưu "+m.name);return;
+  }
   if(e.target.closest(".cell-edit")){
     const r=await uiForm({title:m.name,sub:"Sửa khoảng giá — đơn vị: triệu đồng",icon:"mobile-screen-button",ok:"Lưu Giá",okIcon:"floppy-disk",
       fields:[{k:"bl",label:"Giá nhập thấp",v:fmt(m.bl),half:1,mode:"decimal"},{k:"bh",label:"Giá nhập cao",v:fmt(m.bh),half:1,mode:"decimal"},
               {k:"sl",label:"Giá bán thấp",v:fmt(m.sl),half:1,mode:"decimal"},{k:"sh",label:"Giá bán cao",v:fmt(m.sh),half:1,mode:"decimal"}]});
     if(r){["bl","bh","sl","sh"].forEach(k=>m[k]=num(r[k]));save();drawList();toast("Đã cập nhật giá "+m.name)}
   }
-});
+}
+$("#rows").addEventListener("click",onModelClick);
+$("#cards").addEventListener("click",onModelClick);
 $("#btn-add-model").onclick=async()=>{
   const r=await uiForm({title:"Thêm Mã Máy Mới",sub:"Máy cần tìm thu — đơn vị giá: triệu đồng",icon:"box-open",ok:"Thêm Vào Danh Sách",okIcon:"plus",
-    fields:[{k:"name",label:"Tên mã máy",ph:"vd: Redmi Note 14 Pro"},
-            {k:"brand",label:"Hãng",ph:"vd: Xiaomi",list:"dl_brands"},
+    fields:[{k:"brand",label:"Hãng",type:"brand",half:1},
+            {k:"name",label:"Tên mã máy",ph:"vd: Redmi Note 14 Pro",half:1},
             {k:"bl",label:"Giá nhập thấp",half:1,mode:"decimal",ph:"0"},{k:"bh",label:"Giá nhập cao",half:1,mode:"decimal",ph:"0"},
             {k:"sl",label:"Giá bán thấp",half:1,mode:"decimal",ph:"0"},{k:"sh",label:"Giá bán cao",half:1,mode:"decimal",ph:"0"}]});
   if(!r)return;
@@ -647,27 +766,18 @@ $("#btn-add-model").onclick=async()=>{
   S.models.push({id:"m"+Date.now(),brand:r.brand||"Khác",name:r.name,bl:num(r.bl),bh:num(r.bh),sl:num(r.sl),sh:num(r.sh)});
   save();fillBrand();drawList();toast("Đã thêm "+r.name);
 };
-$("#btn-reset").onclick=async()=>{
-  const ok=await uiConfirm({title:"Đặt lại bảng giá mặc định?",icon:"rotate-left",ok:"Đặt Lại",okIcon:"rotate-left",
-    msg:"Toàn bộ giá đã sửa và mã máy tự thêm sẽ mất. <b class='font-bold text-slate-700'>Lịch hẹn vẫn được giữ nguyên.</b>"});
-  if(ok){S.models=fresh();save();fillBrand();drawList();toast("Đã đặt lại bảng giá")}
-};
-$("#btn-copy-list").onclick=()=>{
-  const txt=filtered().map(m=>`${m.name}: nhập ${fmt(m.bl)}–${fmt(m.bh)} / bán ${fmt(m.sl)}–${fmt(m.sh)} tr`).join("\n");
-  navigator.clipboard?.writeText(txt).then(()=>{flash($("#btn-copy-list"));toast("Đã copy "+filtered().length+" mã máy")},()=>toast("Trình duyệt chặn copy","bad"));
-};
 function flash(btn){const h=btn.innerHTML;btn.innerHTML='<i class="fa-solid fa-check text-emerald-600"></i><span class="hidden sm:inline">Đã copy</span>';paintIcons(btn);setTimeout(()=>{btn.innerHTML=h;paintIcons(btn)},1600)}
 
 /* ============ VIEW 2 ============ */
 $("#wdate").value=CUR;
-$("#wdate").onchange=()=>{CUR=$("#wdate").value||todayISO();drawDay();drawTrip()};
+$("#wdate").onchange=()=>{CUR=$("#wdate").value||todayISO();resetDT();drawDay();drawTrip()};
 $("#dnote").oninput=()=>{day(CUR).note=$("#dnote").value;save()};
 
 function kpiCard(label,val,sub,color,bg,icon){
   return `<div class="bg-white p-4 rounded-2xl border shadow-sm flex items-start justify-between gap-2">
     <div class="min-w-0">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">${label}</p>
-      <h3 class="text-xl font-black ${color} mt-1 truncate">${val}</h3>
+      <p class="text-[10.5px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider leading-tight">${label}</p>
+      <h3 class="text-lg sm:text-xl font-black ${color} mt-1 truncate">${val}</h3>
       <span class="text-[11px] text-slate-400 font-medium">${sub}</span>
     </div>
     <div class="w-10 h-10 rounded-xl ${bg} flex items-center justify-center text-base shrink-0"><i class="fa-solid ${icon}"></i></div>
@@ -733,13 +843,16 @@ function drawDay(){
   paintIcons($("#view-day"));
 }
 $("#addLead").onclick=()=>{
-  const l={id:"l"+Date.now(),name:$("#l_name").value.trim(),phone:$("#l_phone").value.trim(),time:$("#l_time").value,
+  const dt=splitDT($("#l_time").value);
+  const l={id:"l"+Date.now(),name:$("#l_name").value.trim(),phone:$("#l_phone").value.trim(),time:dt.t,
     addr:$("#l_addr").value.trim(),model:$("#l_model").value.trim(),price:$("#l_price").value.trim(),
     note:$("#l_note").value.trim(),st:"wait"};
   if(!l.name&&!l.phone&&!l.addr){toast("Nhập ít nhất tên, số điện thoại hoặc địa chỉ","bad");return}
-  day(CUR).leads.push(l);save();
-  ["l_name","l_phone","l_time","l_addr","l_model","l_price","l_note"].forEach(i=>$("#"+i).value="");
-  drawDay();toast("Đã thêm hẹn"+(l.time?" lúc "+l.time:""));
+  day(dt.d).leads.push(l);save();
+  ["l_name","l_phone","l_addr","l_model","l_price","l_note"].forEach(i=>$("#"+i).value="");
+  resetDT();
+  if(dt.d!==CUR){drawDay();toast("Đã thêm hẹn ngày "+dmy(dt.d)+(l.time?" lúc "+l.time:""),"warn");return}
+  drawDay();drawTrip();toast("Đã thêm hẹn"+(l.time?" lúc "+l.time:""));
 };
 $("#leads").addEventListener("click",async e=>{
   const b=e.target.closest("button.a");if(!b)return;
@@ -755,12 +868,20 @@ $("#leads").addEventListener("click",async e=>{
   if(a==="edit"){
     const r=await uiForm({title:"Sửa Cuộc Hẹn",sub:l.name||"Người bán",icon:"pen",ok:"Lưu Thay Đổi",okIcon:"floppy-disk",
       fields:[{k:"name",label:"Tên người bán",half:1,v:l.name},{k:"phone",label:"Số điện thoại",half:1,v:l.phone,mode:"tel"},
-              {k:"time",label:"Giờ hẹn",half:1,v:l.time,type:"time"},{k:"price",label:"Giá chốt (tr)",half:1,v:l.price,mode:"decimal"},
+              {k:"dt",label:"Ngày & giờ hẹn",half:1,v:l.time?CUR+"T"+l.time:"",type:"datetime-local"},
+              {k:"price",label:"Giá chốt (tr)",half:1,v:l.price,mode:"decimal"},
               {k:"model",label:"Máy",v:l.model,list:"dl_models"},
               {k:"addr",label:"Địa chỉ hẹn gặp",v:l.addr},
               {k:"note",label:"Ghi chú",v:l.note}]});
     if(!r)return;
-    Object.assign(l,r);save();drawDay();drawTrip();toast("Đã lưu thay đổi");return;
+    const nd=r.dt?splitDT(r.dt):{d:CUR,t:""};
+    delete r.dt;Object.assign(l,r);l.time=nd.t;
+    if(nd.d!==CUR){
+      d.leads=d.leads.filter(x=>x.id!==l.id);
+      day(nd.d).leads.push(l);
+      save();drawDay();drawTrip();toast("Đã chuyển hẹn sang ngày "+dmy(nd.d),"warn");return;
+    }
+    save();drawDay();drawTrip();toast("Đã lưu thay đổi");return;
   }
   if(a==="done")l.st=l.st==="done"?"wait":"done";
   else if(a==="drop")l.st="drop";
@@ -829,7 +950,7 @@ $("#copyPlan").onclick=()=>{
 };
 
 /* ============ KHỞI ĐỘNG ============ */
-fillBrand();drawList();drawDay();drawTrip();paintIcons();
+resetDT();fillBrand();drawList();drawDay();drawTrip();paintIcons();
 </script>
 </body>
 </html>
