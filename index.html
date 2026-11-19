@@ -134,6 +134,10 @@
       <button data-tab="list" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-active transition-all flex items-center gap-3 text-left">
         <i class="fa-solid fa-mobile-screen-button w-4 text-center text-sm"></i><span>Mã Máy &amp; Giá</span>
       </button>
+      <button data-tab="hunt" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-inactive transition-all flex items-center gap-3 text-left">
+        <i class="fa-solid fa-radar w-4 text-center text-sm"></i><span>Săn Máy</span>
+        <span id="hunt-dot" class="hidden ml-auto min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">0</span>
+      </button>
       <button data-tab="day" class="nav-btn w-full px-3 py-2.5 rounded-xl text-[13px] font-bold pill-tab-inactive transition-all flex items-center gap-3 text-left">
         <i class="fa-solid fa-handshake w-4 text-center text-sm"></i><span>Lịch Hẹn</span>
       </button>
@@ -167,6 +171,9 @@
 <!-- ================= NAV DƯỚI (điện thoại) ================= -->
 <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200/80 px-2 pt-1.5 safe-bottom flex gap-1 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.18)]">
   <button data-tab="list" class="mnav-btn active"><i class="fa-solid fa-mobile-screen-button"></i><span>Mã máy</span></button>
+  <button data-tab="hunt" class="mnav-btn relative"><i class="fa-solid fa-radar"></i><span>Săn máy</span>
+    <span id="hunt-dot-m" class="hidden absolute top-0.5 right-2 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-black rounded-full items-center justify-center">0</span>
+  </button>
   <button data-tab="day" class="mnav-btn"><i class="fa-solid fa-handshake"></i><span>Lịch hẹn</span></button>
   <button data-tab="trip" class="mnav-btn"><i class="fa-solid fa-route"></i><span>Lịch trình</span></button>
 </nav>
@@ -243,10 +250,61 @@
     <div class="bg-white p-4 rounded-2xl border shadow-sm flex items-start gap-3">
       <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-info text-sm"></i></div>
       <p class="text-xs text-slate-500 font-medium leading-relaxed">
-        Facebook không cho phép trang ngoài tự quét tin bán (API Marketplace đã đóng), nên 3 nút bên phải mỗi dòng mở sẵn truy vấn đúng mã máy đó:
-        <b class="text-slate-700">Marketplace Hà Nội</b> · <b class="text-slate-700">bài viết trên Facebook</b> · <b class="text-slate-700">group thanh lý</b>.
-        Giá là giá tham khảo mặc định — bấm trực tiếp vào số để sửa theo thị trường của anh, app tự lưu.
+        Facebook không mở dữ liệu cho bên ngoài quét, nên 3 nút mỗi dòng mở sẵn truy vấn đúng mã máy, <b class="text-slate-700">đã lọc theo khoảng giá của anh, chỉ tin 7 ngày gần nhất, mới đăng lên đầu</b>:
+        <b class="text-slate-700">Chợ</b> (Marketplace Hà Nội) · <b class="text-slate-700">Bài viết</b> · <b class="text-slate-700">Group</b> thanh lý. Bấm nút nào cũng copy sẵn tên máy để dán vào app Facebook.<br>
+        <b class="text-slate-700">Mẹo:</b> mở Marketplace xong bấm <b class="text-slate-700">Lưu tìm kiếm</b> một lần cho mỗi mã hay thu — từ đó Facebook tự báo khi có tin mới, khỏi phải vào tìm.
+        Muốn app tự quét thì sang tab <b class="text-slate-700">Săn Máy</b> (quét Chợ Tốt).
       </p>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: SĂN MÁY ============ -->
+  <div id="view-hunt" class="space-y-4 hidden">
+    <div class="bg-white p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row gap-3 md:items-center justify-between">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="page-icon bg-gradient-to-br from-rose-500 to-orange-500"><i class="fa-solid fa-radar"></i></div>
+        <div class="min-w-0">
+          <h2 class="page-title">Săn Máy Tự Động</h2>
+          <p class="page-sub" id="hunt-sub">App tự quét tin mới trên Chợ Tốt, đối chiếu bảng giá của anh</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap md:justify-end">
+        <select id="hunt-region" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700">
+          <option value="12000">Hà Nội</option>
+          <option value="">Toàn quốc</option>
+        </select>
+        <select id="hunt-limit" class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700">
+          <option value="100">Quét 100 tin</option>
+          <option value="200">Quét 200 tin</option>
+          <option value="300">Quét 300 tin</option>
+        </select>
+        <button id="hunt-scan" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
+          <i class="fa-solid fa-radar"></i><span>Quét Ngay</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="hunt-kpi"></div>
+
+    <div class="bg-white p-3 rounded-2xl border shadow-sm flex items-center gap-2 flex-wrap">
+      <button id="f-deal" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ món hời</button>
+      <button id="f-new" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ tin mới</button>
+      <select id="hunt-sort" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 ml-auto">
+        <option value="profit">Lãi cao nhất</option>
+        <option value="time">Mới đăng nhất</option>
+        <option value="cheap">Giá rẻ nhất</option>
+      </select>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="section-head">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="section-dot bg-rose-500 animate-pulse"></span>
+          <h3 class="section-title">Tin Khớp Mã Máy Của Anh <span id="hunt-count" class="normal-case text-rose-600">(0)</span></h3>
+        </div>
+        <span class="text-[10.5px] font-bold text-slate-400" id="hunt-time">chưa quét</span>
+      </div>
+      <div id="hunt-list" class="divide-y divide-slate-100"></div>
     </div>
   </div>
 
@@ -283,6 +341,9 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
       <div class="section-head">
         <div class="flex items-center gap-2"><span class="section-dot bg-indigo-500"></span><h3 class="section-title">Thêm Người Bán Đã Liên Hệ Được</h3></div>
+        <button id="btn-paste" class="px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-clipboard"></i><span>Dán tin</span>
+        </button>
       </div>
       <div class="p-4 space-y-3">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -479,6 +540,9 @@ const ICONS={
 "wallet":'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>',
 "chart-line":'<path d="M4 4v16h16"/><path d="M7 15.5l4-4.5 3 3 5-6.5"/>',
 "circle-check":'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>',
+"radar":'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 12l6.2-5.2M12 3.5v2"/>',
+"bolt":'<path d="M13 3L5.5 13H11l-1 8 8-10.5H12.5L13 3z"/>',
+"clipboard":'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9.5 4V2.8h5V4M9 10h6M9 14h4"/>',
 "download":'<path d="M12 3v12M7.5 11l4.5 4.5 4.5-4.5M4 20h16"/>',
 "triangle-exclamation":'<path d="M12 3.5L21 19.5H3L12 3.5z"/><path d="M12 9.5v4.5M12 16.8v.3"/>',
 "box-open":'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>',
@@ -521,6 +585,8 @@ function uiForm(o){return new Promise(res=>{
         </select>
         <input id="uif-${i}-o" placeholder="Nhập tên hãng" value="${esc(known?"":(f.v||""))}"
           class="${INP} mt-2 ${cur===BRAND_OTHER?"":"hidden"}">`;
+    }else if(f.type==="area"){
+      body=`<textarea id="uif-${i}" rows="${f.rows||6}" placeholder="${esc(f.ph||"")}" class="${INP}">${esc(f.v||"")}</textarea>`;
     }else{
       body=`<input id="uif-${i}" type="${f.type||"text"}" ${f.list?`list="${f.list}"`:""} ${f.mode?`inputmode="${f.mode}"`:""}
         value="${esc(f.v==null?"":f.v)}" placeholder="${esc(f.ph||"")}" class="${INP}">`;
@@ -548,7 +614,7 @@ function uiForm(o){return new Promise(res=>{
         <i class="fa-solid fa-${o.okIcon||"check"}"></i><span>${esc(o.ok||"Lưu Lại")}</span></button>
     </div></div>`;
   UI.classList.remove("hidden");paintIcons(UI);
-  const f0=UI.querySelector("input,select");if(f0){f0.focus();try{f0.select()}catch(e){}}
+  const f0=UI.querySelector("input,select,textarea");if(f0){f0.focus();try{f0.select()}catch(e){}}
   o.fields.forEach((f,i)=>{
     if(f.type!=="brand")return;
     const sel=UI.querySelector("#uif-"+i),oth=UI.querySelector("#uif-"+i+"-o");
@@ -618,13 +684,14 @@ function resetDT(){$("#l_time").value=CUR+"T09:00"}
 
 /* ============ ĐIỀU HƯỚNG ============ */
 function go(tab){
-  ["list","day","trip"].forEach(t=>$("#view-"+t).classList.toggle("hidden",t!==tab));
+  ["list","hunt","day","trip"].forEach(t=>$("#view-"+t).classList.toggle("hidden",t!==tab));
   document.querySelectorAll(".nav-btn").forEach(b=>{
     const on=b.dataset.tab===tab;
     b.classList.toggle("pill-tab-active",on);b.classList.toggle("pill-tab-inactive",!on);
   });
   document.querySelectorAll(".mnav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   if(tab==="trip")drawTrip();
+  if(tab==="hunt"&&!HUNT.loaded)scanChotot();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".nav-btn,.mnav-btn").forEach(b=>b.onclick=()=>go(b.dataset.tab));
@@ -646,10 +713,14 @@ function fullName(m){
 function fbBtns(m,big){
   const name=fullName(m);
   const q=encodeURIComponent(name+" cũ");
+  /* lọc sẵn: giá từ nửa mức nhập thấp đến mức bán thấp, tin 7 ngày, mới nhất lên đầu */
+  const mkt="https://www.facebook.com/marketplace/hanoi/search/?query="+encodeURIComponent(name)+
+    "&minPrice="+Math.round(m.bl*0.5*1e6)+"&maxPrice="+Math.round(m.sl*1e6)+
+    "&daysSinceListed=7&sortBy=creation_time_descend&exact=false";
   const sz=big?"flex-1 h-10 gap-1.5 text-[11.5px] font-bold":"w-8 h-8";
   const lbl=big?1:0;
   return `<div class="flex items-center ${big?"":"justify-center"} gap-1.5">
-    <a data-fb target="_blank" rel="noopener" title="Marketplace Hà Nội" href="https://www.facebook.com/marketplace/hanoi/search/?query=${encodeURIComponent(name)}"
+    <a data-fb target="_blank" rel="noopener" title="Marketplace Hà Nội" href="${mkt}"
       class="${sz} rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition"><i class="fa-solid fa-store text-[11px]"></i>${lbl?"<span>Chợ</span>":""}</a>
     <a data-fb target="_blank" rel="noopener" title="Tìm bài viết trên Facebook" href="https://www.facebook.com/search/posts/?q=${q}"
       class="${sz} rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition"><i class="fa-solid fa-newspaper text-[11px]"></i>${lbl?"<span>Bài viết</span>":""}</a>
@@ -888,6 +959,231 @@ $("#leads").addEventListener("click",async e=>{
   else if(a==="reset")l.st="wait";
   save();drawDay();drawTrip();
 });
+
+/* ============ SĂN MÁY (Chợ Tốt) ============ */
+const HUNT={loaded:false,items:[],at:null,err:null,onlyDeal:false,onlyNew:false};
+const SEEN_KEY="sothumay.seen";
+const seen=()=>{try{return JSON.parse(localStorage.getItem(SEEN_KEY)||"[]")}catch(e){return[]}};
+const markSeen=ids=>{try{localStorage.setItem(SEEN_KEY,JSON.stringify([...new Set([...seen(),...ids])].slice(-3000)))}catch(e){}};
+
+const norm=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/gi,"d")
+  .toLowerCase().replace(/[^a-z0-9+]+/g," ").replace(/\s+/g," ").trim();
+
+function matchModel(title){
+  const t=" "+norm(title)+" ";
+  let best=null,bestLen=0;
+  S.models.forEach(m=>{
+    [fullName(m),m.name].forEach(n=>{
+      const k=" "+norm(n)+" ";
+      if(k.length>4&&t.includes(k)&&k.length>bestLen){best=m;bestLen=k.length}
+    });
+  });
+  return best;
+}
+const tr=v=>v/1e6;
+function agoText(t){
+  if(!t)return "";
+  const ms=typeof t==="number"?(t<1e12?t*1000:t):Date.parse(t);
+  if(!ms||isNaN(ms))return "";
+  const p=Math.floor((Date.now()-ms)/60000);
+  if(p<60)return p+" phút trước";
+  if(p<1440)return Math.floor(p/60)+" giờ trước";
+  return Math.floor(p/1440)+" ngày trước";
+}
+const tms=t=>!t?0:(typeof t==="number"?(t<1e12?t*1000:t):Date.parse(t)||0);
+
+async function scanChotot(){
+  const btn=$("#hunt-scan");btn.disabled=true;
+  $("#hunt-time").textContent="đang quét…";
+  HUNT.err=null;
+  const region=$("#hunt-region").value,want=+$("#hunt-limit").value||100;
+  const pages=Math.ceil(want/100);
+  let raw=[];
+  try{
+    for(let i=1;i<=pages;i++){
+      const r=await fetch("/api/chotot?limit=100&page="+i+"&region="+encodeURIComponent(region));
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      const j=await r.json();
+      if(j.error)throw new Error(j.error);
+      raw=raw.concat(j.items||[]);
+      if(!j.items||j.items.length<100)break;
+    }
+  }catch(e){
+    HUNT.err=String(e.message||e);
+    btn.disabled=false;HUNT.loaded=true;drawHunt();return;
+  }
+  const old=new Set(seen());
+  const out=[];
+  raw.forEach(a=>{
+    const m=matchModel(a.title);
+    if(!m)return;
+    const giaTr=tr(a.price);
+    if(!giaTr||giaTr<0.2||giaTr>60)return;
+    const banTB=(m.sl+m.sh)/2;
+    out.push(Object.assign({},a,{giaTr:giaTr,m:m,deal:giaTr<=m.bh,lai:banTB-giaTr,isNew:!old.has(String(a.id))}));
+  });
+  HUNT.items=out;HUNT.at=new Date();HUNT.loaded=true;
+  btn.disabled=false;
+  drawHunt();
+  markSeen(raw.map(a=>String(a.id)));
+  const sw=out.filter(x=>x.deal).length;
+  toast(out.length?("Quét "+raw.length+" tin — khớp "+out.length+", món hời "+sw):("Quét "+raw.length+" tin, chưa có tin nào khớp"));
+}
+
+function huntFiltered(){
+  let l=HUNT.items.slice();
+  if(HUNT.onlyDeal)l=l.filter(x=>x.deal);
+  if(HUNT.onlyNew)l=l.filter(x=>x.isNew);
+  const so=$("#hunt-sort").value;
+  const by={profit:(a,b)=>b.lai-a.lai,cheap:(a,b)=>a.giaTr-b.giaTr,time:(a,b)=>tms(b.time)-tms(a.time)};
+  return l.sort(by[so]||by.profit);
+}
+
+function drawHunt(){
+  const deal=HUNT.items.filter(x=>x.deal),fresh=HUNT.items.filter(x=>x.isNew);
+  const tongLai=deal.reduce((s,x)=>s+x.lai,0);
+  $("#hunt-kpi").innerHTML=
+    kpiCard("Tin Khớp Mã",HUNT.items.length,"trong lần quét gần nhất","text-slate-800","bg-rose-50 text-rose-600","fa-radar")+
+    kpiCard("Món Hời",deal.length,"giá dưới mức nhập của anh","text-emerald-600","bg-emerald-50 text-emerald-600","fa-bolt")+
+    kpiCard("Tin Mới",fresh.length,"chưa thấy ở lần quét trước","text-indigo-600","bg-indigo-50 text-indigo-600","fa-newspaper")+
+    kpiCard("Lãi Nếu Gom Hết",(tongLai>=0?"+":"")+fmt(tongLai)+" tr","theo giá bán tham khảo","text-purple-600","bg-purple-50 text-purple-600","fa-chart-line");
+
+  ["#hunt-dot","#hunt-dot-m"].forEach(id=>{const e=$(id);if(!e)return;
+    e.textContent=deal.length;e.classList.toggle("hidden",!deal.length);e.classList.toggle("flex",!!deal.length)});
+
+  $("#hunt-count").textContent="("+huntFiltered().length+")";
+  $("#hunt-time").textContent=HUNT.at?("quét lúc "+HUNT.at.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})):"chưa quét";
+
+  if(HUNT.err){
+    $("#hunt-list").innerHTML='<div class="p-6 text-center">'+
+      '<div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>'+
+      '<p class="text-sm font-bold text-slate-700 mb-1">Chưa gọi được Chợ Tốt</p>'+
+      '<p class="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">Phần quét cần tệp <b>api/chotot.js</b> nằm cùng repo và chạy trên Vercel. Mở app bằng đường dẫn Vercel thì mới chạy được.<br><span class="text-slate-400">Chi tiết: '+esc(HUNT.err)+'</span></p></div>';
+    paintIcons($("#view-hunt"));return;
+  }
+  const l=huntFiltered();
+  $("#hunt-list").innerHTML=l.length?l.map(x=>`<div class="p-3.5" data-hid="${esc(String(x.id))}">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-1.5 flex-wrap mb-1">
+          <span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${BRAND_STYLE[x.m.brand]||"bg-slate-50 text-slate-600 border-slate-200"} uppercase">${esc(x.m.brand)}</span>
+          <span class="text-[11px] font-bold text-slate-500">${esc(x.m.name)}</span>
+          ${x.deal?'<span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 uppercase">Món hời</span>':''}
+          ${x.isNew?'<span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 uppercase">Mới</span>':''}
+        </div>
+        <p class="font-bold text-slate-800 text-[14px] leading-snug">${esc(x.title)}</p>
+        <p class="text-xs font-medium text-slate-500 mt-1">${esc(x.area||"")}${x.time?" · "+esc(agoText(x.time)):""}${x.seller?" · "+esc(x.seller):""}</p>
+      </div>
+      <div class="text-right shrink-0">
+        <div class="text-lg font-black ${x.deal?"text-emerald-600":"text-slate-800"} tabular-nums">${fmt(x.giaTr)} tr</div>
+        <div class="text-[11px] font-bold ${x.lai>0?"text-purple-600":"text-slate-400"}">${x.lai>0?"lãi ~+"+fmt(x.lai):"không lãi"}</div>
+        <div class="text-[10px] text-slate-400 font-medium">nhập ${fmt(x.m.bl)}–${fmt(x.m.bh)}</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 flex-wrap mt-3">
+      <a href="${esc(x.url)}" target="_blank" rel="noopener" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-[11.5px] font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-newspaper"></i> Xem tin</a>
+      <button class="hunt-lead px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-[11.5px] font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-calendar-plus"></i> Tạo hẹn</button>
+    </div>
+  </div>`).join(""):'<div class="py-10 text-center"><div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i class="fa-solid fa-radar text-lg"></i></div><p class="text-sm text-slate-400 font-medium">'+(HUNT.loaded?"Lần quét này chưa có tin nào khớp bảng giá.<br>Thử tăng số tin quét hoặc chọn Toàn quốc.":"Bấm <b>Quét Ngay</b> để tìm tin mới.")+'</p></div>';
+  paintIcons($("#view-hunt"));
+}
+
+$("#hunt-scan").onclick=scanChotot;
+$("#hunt-region").onchange=scanChotot;
+$("#hunt-limit").onchange=scanChotot;
+$("#hunt-sort").onchange=drawHunt;
+function huntToggle(id,key){
+  const b=$(id);
+  b.onclick=()=>{
+    HUNT[key]=!HUNT[key];
+    b.classList.toggle("pill-tab-active",HUNT[key]);
+    b.classList.toggle("bg-slate-50",!HUNT[key]);
+    drawHunt();
+  };
+}
+huntToggle("#f-deal","onlyDeal");huntToggle("#f-new","onlyNew");
+
+$("#hunt-list").addEventListener("click",async e=>{
+  const b=e.target.closest(".hunt-lead");if(!b)return;
+  const box=b.closest("[data-hid]");
+  const x=HUNT.items.find(i=>String(i.id)===box.dataset.hid);if(!x)return;
+  const r=await uiForm({title:"Tạo Hẹn Từ Tin Chợ Tốt",sub:x.m.name+" · "+fmt(x.giaTr)+" tr",icon:"calendar-plus",ok:"Thêm Vào Lịch",okIcon:"calendar-plus",
+    fields:[{k:"name",label:"Tên người bán",half:1,v:x.seller||""},{k:"phone",label:"Số điện thoại",half:1,mode:"tel"},
+            {k:"dt",label:"Ngày & giờ hẹn",half:1,v:CUR+"T09:00",type:"datetime-local"},
+            {k:"price",label:"Giá chốt (tr)",half:1,v:fmt(x.giaTr),mode:"decimal"},
+            {k:"addr",label:"Địa chỉ hẹn gặp",v:x.area||""},
+            {k:"note",label:"Ghi chú",v:x.title+" — "+x.url}]});
+  if(!r)return;
+  const nd=splitDT(r.dt);
+  day(nd.d).leads.push({id:"l"+Date.now(),name:r.name,phone:r.phone,time:nd.t,addr:r.addr,
+    model:x.m.name,price:r.price,note:r.note,st:"wait"});
+  save();drawDay();drawTrip();
+  toast(nd.d===CUR?"Đã thêm vào lịch hôm nay":"Đã thêm hẹn ngày "+dmy(nd.d),nd.d===CUR?"":"warn");
+});
+
+/* ============ DÁN TIN → TẠO HẸN ============ */
+const deacc=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/gi,"d").toLowerCase();
+const normP=t=>deacc(t).replace(/[^a-z0-9.,+]+/g," ").replace(/\s+/g," ").trim();
+
+function parsePhone(text){
+  const cands=String(text).match(/(?<![\d.,])(?:\+?84|0)(?:[\s.\-]?\d){8,10}(?![\d])/g)||[];
+  for(const c of cands){
+    let d=c.replace(/\D/g,"");
+    if(d.startsWith("84"))d="0"+d.slice(2);
+    if(/^0\d{9}$/.test(d))return d;
+  }
+  return "";
+}
+function parsePrice(text){
+  const t=normP(text);let m;
+  if((m=t.match(/(\d{1,2})[.,](\d{1,3})\s*(?:tr|trieu)/))){const b=m[2];return +m[1]+(b.length===1?+b/10:b.length===2?+b/100:+b/1000)}
+  if((m=t.match(/(\d{1,2})\s*(?:tr|trieu)\s*(\d{1,3})(?!\d)/))){const b=m[2];return +m[1]+(b.length===1?+b/10:b.length===2?+b/100:+b/1000)}
+  if((m=t.match(/(\d{1,2})\s*(?:tr|trieu)/)))return +m[1];
+  if((m=t.match(/(\d{3,4})\s*k(?![a-z])/)))return +m[1]/1000;
+  if((m=t.match(/(\d{1,2})[.,](\d{3})[.,](\d{3})/)))return +(m[1]+m[2])/1000;
+  if((m=t.match(/(?<![\d.,])(\d{6,8})(?![\d.,])/)))return +m[1]/1e6;
+  return 0;
+}
+const ADDR_RE=/(địa chỉ|dia chi|số nhà|so nha|ngõ|ngo |ngách|đường|duong |phố |quận|quan |huyện|phường|phuong |thôn |tòa |chung cư|khu đô thị|\bQ\.|\bP\.)/i;
+function parseAddr(text){
+  const lines=String(text).split(/[\n\r]+/).map(x=>x.trim()).filter(Boolean);
+  let best="";
+  for(const l of lines){
+    const m=l.match(ADDR_RE);
+    if(!m||l.length>160)continue;
+    let c=l.slice(l.indexOf(m[0])).replace(/^(địa chỉ|dia chi)\s*[:\-]?\s*/i,"").trim();
+    if(!best||c.length<best.length)best=c;
+  }
+  return best;
+}
+
+async function pasteLead(){
+  let clip="";
+  try{clip=await navigator.clipboard.readText()}catch(e){}
+  const r1=await uiForm({title:"Dán Tin Người Bán",sub:"Dán nguyên đoạn chữ từ Facebook / Chợ Tốt / Zalo",icon:"clipboard",ok:"Bóc Tách",okIcon:"bolt",
+    fields:[{k:"txt",label:"Nội dung tin",type:"area",rows:7,v:clip,
+      ph:"Bán Redmi Note 13 Pro 8/256 zin all\nGiá 3tr5\nĐịa chỉ: ngõ 58 Trần Bình, Cầu Giấy\nLH 0987.654.321"}]});
+  if(!r1||!r1.txt)return;
+  const t=r1.txt;
+  const m=matchModel(t),gia=parsePrice(t),sdt=parsePhone(t),dc=parseAddr(t);
+  const got=[m?"mã máy":"",gia?"giá":"",sdt?"số điện thoại":"",dc?"địa chỉ":""].filter(Boolean);
+  const r2=await uiForm({title:"Kiểm Tra Lại",sub:got.length?("Đã bóc được "+got.join(", ")):"Không bóc được gì, anh điền tay",
+    icon:"calendar-plus",ok:"Thêm Vào Lịch",okIcon:"calendar-plus",
+    fields:[{k:"name",label:"Tên người bán",half:1},{k:"phone",label:"Số điện thoại",half:1,v:sdt,mode:"tel"},
+            {k:"dt",label:"Ngày & giờ hẹn",half:1,v:CUR+"T09:00",type:"datetime-local"},
+            {k:"price",label:"Giá chốt (tr)",half:1,v:gia?fmt(gia):"",mode:"decimal"},
+            {k:"model",label:"Máy",v:m?m.name:"",list:"dl_models"},
+            {k:"addr",label:"Địa chỉ hẹn gặp",v:dc},
+            {k:"note",label:"Ghi chú",v:t.replace(/\s+/g," ").slice(0,160)}]});
+  if(!r2)return;
+  if(!r2.name&&!r2.phone&&!r2.addr){toast("Cần ít nhất tên, số điện thoại hoặc địa chỉ","bad");return}
+  const nd=splitDT(r2.dt);
+  day(nd.d).leads.push({id:"l"+Date.now(),name:r2.name,phone:r2.phone,time:nd.t,addr:r2.addr,
+    model:r2.model,price:r2.price,note:r2.note,st:"wait"});
+  save();drawDay();drawTrip();
+  toast(nd.d===CUR?"Đã thêm vào lịch hôm nay":"Đã thêm hẹn ngày "+dmy(nd.d),nd.d===CUR?"":"warn");
+}
+$("#btn-paste").onclick=pasteLead;
 
 /* ============ VIEW 3 ============ */
 function plan(){
