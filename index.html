@@ -7,8 +7,8 @@
 <!-- Cài như ứng dụng (PWA) trên Android / iPhone / Windows -->
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#7c3aed">
-<link rel="icon" type="image/png" href="/favicon.png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -287,6 +287,11 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="hunt-kpi"></div>
 
     <div class="bg-white p-3 rounded-2xl border shadow-sm flex items-center gap-2 flex-wrap">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Nguồn</span>
+      <button data-src="chotot" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Chợ Tốt</button>
+      <button data-src="vuatot" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Vựa Tốt</button>
+      <button data-src="nhattao" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Nhật Tảo</button>
+      <span class="w-px h-5 bg-slate-200 mx-1"></span>
       <button id="f-deal" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ món hời</button>
       <button id="f-new" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ tin mới</button>
       <select id="hunt-sort" class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 ml-auto">
@@ -961,7 +966,13 @@ $("#leads").addEventListener("click",async e=>{
 });
 
 /* ============ SĂN MÁY (Chợ Tốt) ============ */
-const HUNT={loaded:false,items:[],at:null,err:null,onlyDeal:false,onlyNew:false};
+const SRC_LABEL={chotot:"Chợ Tốt",vuatot:"Vựa Tốt",nhattao:"Nhật Tảo"};
+const SRC_STYLE={chotot:"bg-orange-50 text-orange-700 border-orange-200",
+  vuatot:"bg-sky-50 text-sky-700 border-sky-200",nhattao:"bg-violet-50 text-violet-700 border-violet-200"};
+const SRC_KEY="sothumay.src";
+function loadSrc(){try{const v=JSON.parse(localStorage.getItem(SRC_KEY));if(Array.isArray(v)&&v.length)return v}catch(e){}
+  return ["chotot","vuatot","nhattao"]}
+const HUNT={loaded:false,items:[],at:null,err:null,errs:[],onlyDeal:false,onlyNew:false,srcs:loadSrc()};
 const SEEN_KEY="sothumay.seen";
 const seen=()=>{try{return JSON.parse(localStorage.getItem(SEEN_KEY)||"[]")}catch(e){return[]}};
 const markSeen=ids=>{try{localStorage.setItem(SEEN_KEY,JSON.stringify([...new Set([...seen(),...ids])].slice(-3000)))}catch(e){}};
@@ -998,20 +1009,44 @@ async function scanChotot(){
   HUNT.err=null;
   const region=$("#hunt-region").value,want=+$("#hunt-limit").value||100;
   const pages=Math.ceil(want/100);
-  let raw=[];
-  try{
+  HUNT.errs=[];
+  const jobs=[];
+
+  if(HUNT.srcs.includes("chotot"))jobs.push((async()=>{
+    let out=[];
     for(let i=1;i<=pages;i++){
       const r=await fetch("/api/chotot?limit=100&page="+i+"&region="+encodeURIComponent(region));
-      if(!r.ok)throw new Error("HTTP "+r.status);
+      if(!r.ok)throw new Error("Chợ Tốt: HTTP "+r.status);
       const j=await r.json();
-      if(j.error)throw new Error(j.error);
-      raw=raw.concat(j.items||[]);
+      if(j.error)throw new Error("Chợ Tốt: "+j.error);
+      out=out.concat((j.items||[]).map(x=>Object.assign({src:"chotot"},x)));
       if(!j.items||j.items.length<100)break;
     }
-  }catch(e){
-    HUNT.err=String(e.message||e);
-    btn.disabled=false;HUNT.loaded=true;drawHunt();return;
-  }
+    return out;
+  })());
+
+  ["vuatot","nhattao"].forEach(src=>{
+    if(!HUNT.srcs.includes(src))return;
+    jobs.push((async()=>{
+      let out=[];
+      const np=Math.min(pages,3);
+      for(let i=1;i<=np;i++){
+        const r=await fetch("/api/scan?source="+src+"&page="+i);
+        if(!r.ok)throw new Error(SRC_LABEL[src]+": HTTP "+r.status);
+        const j=await r.json();
+        if(j.error)throw new Error(SRC_LABEL[src]+": "+j.error);
+        out=out.concat(j.items||[]);
+        if(!j.items||!j.items.length)break;
+      }
+      return out;
+    })());
+  });
+
+  if(!jobs.length){HUNT.err="Chưa chọn nguồn nào";btn.disabled=false;HUNT.loaded=true;drawHunt();return}
+  const got=await Promise.allSettled(jobs);
+  let raw=[];
+  got.forEach(g=>{ if(g.status==="fulfilled")raw=raw.concat(g.value); else HUNT.errs.push(String(g.reason&&g.reason.message||g.reason)) });
+  HUNT.err=raw.length?null:(HUNT.errs[0]||"Không lấy được tin nào");
   const old=new Set(seen());
   const out=[];
   raw.forEach(a=>{
@@ -1022,12 +1057,19 @@ async function scanChotot(){
     const banTB=(m.sl+m.sh)/2;
     out.push(Object.assign({},a,{giaTr:giaTr,m:m,deal:giaTr<=m.bh,lai:banTB-giaTr,isNew:!old.has(String(a.id))}));
   });
+  /* tin không ghi giá: vẫn hiện để anh tự xem */
+  raw.forEach(a=>{
+    if(a.price)return;
+    const m=matchModel(a.title);if(!m)return;
+    out.push(Object.assign({},a,{giaTr:0,m:m,deal:false,lai:0,isNew:!old.has(String(a.id))}));
+  });
   HUNT.items=out;HUNT.at=new Date();HUNT.loaded=true;
   btn.disabled=false;
   drawHunt();
   markSeen(raw.map(a=>String(a.id)));
   const sw=out.filter(x=>x.deal).length;
-  toast(out.length?("Quét "+raw.length+" tin — khớp "+out.length+", món hời "+sw):("Quét "+raw.length+" tin, chưa có tin nào khớp"));
+  if(HUNT.errs.length&&raw.length)toast("Một nguồn lỗi: "+HUNT.errs[0],"warn");
+  else toast(out.length?("Quét "+raw.length+" tin — khớp "+out.length+", món hời "+sw):("Quét "+raw.length+" tin, chưa có tin nào khớp"));
 }
 
 function huntFiltered(){
@@ -1054,11 +1096,16 @@ function drawHunt(){
   $("#hunt-count").textContent="("+huntFiltered().length+")";
   $("#hunt-time").textContent=HUNT.at?("quét lúc "+HUNT.at.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})):"chưa quét";
 
+  if(HUNT.errs&&HUNT.errs.length&&HUNT.items.length){
+    $("#hunt-sub").textContent="Nguồn lỗi: "+HUNT.errs.join(" · ");
+  }else if(HUNT.items.length){
+    $("#hunt-sub").textContent="Quét "+HUNT.srcs.map(s=>SRC_LABEL[s]).join(" · ")+", đối chiếu bảng giá của anh";
+  }
   if(HUNT.err){
     $("#hunt-list").innerHTML='<div class="p-6 text-center">'+
       '<div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>'+
       '<p class="text-sm font-bold text-slate-700 mb-1">Chưa gọi được Chợ Tốt</p>'+
-      '<p class="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">Phần quét cần tệp <b>api/chotot.js</b> nằm cùng repo và chạy trên Vercel. Mở app bằng đường dẫn Vercel thì mới chạy được.<br><span class="text-slate-400">Chi tiết: '+esc(HUNT.err)+'</span></p></div>';
+      '<p class="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">Phần quét cần hai tệp <b>api/chotot.js</b> và <b>api/scan.js</b> nằm cùng repo, mở app bằng đường dẫn Vercel.<br><span class="text-slate-400">Chi tiết: '+esc([HUNT.err].concat(HUNT.errs||[]).filter(Boolean).join(' | '))+'</span></p></div>';
     paintIcons($("#view-hunt"));return;
   }
   const l=huntFiltered();
@@ -1068,6 +1115,7 @@ function drawHunt(){
         <div class="flex items-center gap-1.5 flex-wrap mb-1">
           <span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${BRAND_STYLE[x.m.brand]||"bg-slate-50 text-slate-600 border-slate-200"} uppercase">${esc(x.m.brand)}</span>
           <span class="text-[11px] font-bold text-slate-500">${esc(x.m.name)}</span>
+          <span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${SRC_STYLE[x.src]||"bg-slate-50 text-slate-600 border-slate-200"} uppercase">${esc(SRC_LABEL[x.src]||x.src||"")}</span>
           ${x.deal?'<span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 uppercase">Món hời</span>':''}
           ${x.isNew?'<span class="text-[9.5px] font-black px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 uppercase">Mới</span>':''}
         </div>
@@ -1075,8 +1123,8 @@ function drawHunt(){
         <p class="text-xs font-medium text-slate-500 mt-1">${esc(x.area||"")}${x.time?" · "+esc(agoText(x.time)):""}${x.seller?" · "+esc(x.seller):""}</p>
       </div>
       <div class="text-right shrink-0">
-        <div class="text-lg font-black ${x.deal?"text-emerald-600":"text-slate-800"} tabular-nums">${fmt(x.giaTr)} tr</div>
-        <div class="text-[11px] font-bold ${x.lai>0?"text-purple-600":"text-slate-400"}">${x.lai>0?"lãi ~+"+fmt(x.lai):"không lãi"}</div>
+        <div class="text-lg font-black ${x.deal?"text-emerald-600":x.giaTr?"text-slate-800":"text-slate-400"} tabular-nums">${x.giaTr?fmt(x.giaTr)+" tr":"—"}</div>
+        <div class="text-[11px] font-bold ${x.lai>0?"text-purple-600":"text-slate-400"}">${x.giaTr?(x.lai>0?"lãi ~+"+fmt(x.lai):"không lãi"):"chưa rõ giá"}</div>
         <div class="text-[10px] text-slate-400 font-medium">nhập ${fmt(x.m.bl)}–${fmt(x.m.bh)}</div>
       </div>
     </div>
@@ -1102,6 +1150,25 @@ function huntToggle(id,key){
   };
 }
 huntToggle("#f-deal","onlyDeal");huntToggle("#f-new","onlyNew");
+
+function paintSrc(){
+  document.querySelectorAll(".src-f").forEach(b=>{
+    const on=HUNT.srcs.includes(b.dataset.src);
+    b.classList.toggle("pill-tab-active",on);
+    b.classList.toggle("bg-slate-50",!on);
+    b.classList.toggle("text-slate-500",!on);
+  });
+}
+document.querySelectorAll(".src-f").forEach(b=>{
+  b.onclick=()=>{
+    const s=b.dataset.src;
+    HUNT.srcs=HUNT.srcs.includes(s)?HUNT.srcs.filter(x=>x!==s):HUNT.srcs.concat(s);
+    if(!HUNT.srcs.length)HUNT.srcs=[s];
+    try{localStorage.setItem(SRC_KEY,JSON.stringify(HUNT.srcs))}catch(e){}
+    paintSrc();scanChotot();
+  };
+});
+paintSrc();
 
 $("#hunt-list").addEventListener("click",async e=>{
   const b=e.target.closest(".hunt-lead");if(!b)return;
