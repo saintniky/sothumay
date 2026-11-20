@@ -278,8 +278,11 @@
           <option value="200">Quét 200 tin</option>
           <option value="300">Quét 300 tin</option>
         </select>
-        <button id="hunt-fb" class="px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-bold rounded-xl transition flex items-center gap-1.5 text-xs sm:text-sm">
-          <i class="fa-solid fa-clipboard"></i><span>Nhập từ Facebook</span>
+        <button id="hunt-fbgo" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center gap-1.5 text-xs sm:text-sm">
+          <i class="fa-solid fa-store"></i><span>Quét Facebook</span>
+        </button>
+        <button id="hunt-fb" class="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition flex items-center gap-1.5 text-xs sm:text-sm" title="Dán thủ công nếu tab không tự mở">
+          <i class="fa-solid fa-clipboard"></i><span class="hidden sm:inline">Dán tay</span>
         </button>
         <button id="hunt-scan" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
           <i class="fa-solid fa-radar"></i><span>Quét Ngay</span>
@@ -382,7 +385,7 @@
           <div>
             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Máy</label>
             <input id="l_model" list="dl_models" placeholder="Chọn / gõ mã máy" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl font-medium">
-            <datalist id="dl_models"></datalist><datalist id="dl_brands"></datalist>
+            <datalist id="dl_models"></datalist><datalist id="dl_brands"></datalist><datalist id="dl_kw"></datalist>
           </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -796,6 +799,7 @@ function drawList(){
   </div>`).join(""):`<div class="py-10 text-center text-sm text-slate-400 font-medium">Không có mã nào khớp.</div>`;
   $("#dl_models").innerHTML=S.models.map(m=>`<option>${esc(m.name)}</option>`).join("");
   $("#dl_brands").innerHTML=brands().map(b=>`<option>${esc(b)}</option>`).join("");
+  $("#dl_kw").innerHTML=FB_KW.map(k=>`<option>${esc(k)}</option>`).join("");
   paintIcons($("#view-list"));
 }
 ["q","fbrand","fsort"].forEach(i=>$("#"+i).addEventListener("input",drawList));
@@ -1147,6 +1151,7 @@ function drawHunt(){
         </div>
         <p class="font-bold text-slate-800 text-[14px] leading-snug">${esc(x.title)}</p>
         <p class="text-xs font-medium text-slate-500 mt-1">${esc(x.area||"")}${x.time?" · "+esc(agoText(x.time)):""}${x.seller?" · "+esc(x.seller):""}</p>
+        <p class="text-[10.5px] font-medium text-slate-400 mt-0.5 break-all">${esc(x.url||"")}</p>
       </div>
       <div class="text-right shrink-0">
         <div class="text-lg font-black ${x.deal?"text-emerald-600":x.giaTr?"text-slate-800":"text-slate-400"} tabular-nums">${x.giaTr?fmt(x.giaTr)+" tr":"—"}</div>
@@ -1156,6 +1161,7 @@ function drawHunt(){
     </div>
     <div class="flex items-center gap-1.5 flex-wrap mt-3">
       <a href="${esc(x.url)}" target="_blank" rel="noopener" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-[11.5px] font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-newspaper"></i> Xem tin</a>
+      <button class="hunt-copy px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11.5px] font-bold transition flex items-center gap-1.5"><i class="fa-regular fa-copy"></i> Copy link</button>
       <button class="hunt-lead px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-[11.5px] font-bold transition flex items-center gap-1.5"><i class="fa-solid fa-calendar-plus"></i> Tạo hẹn</button>
     </div>
   </div>`).join(""):'<div class="py-10 text-center"><div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3"><i class="fa-solid fa-radar text-lg"></i></div><p class="text-sm text-slate-400 font-medium">'+(HUNT.loaded?"Lần quét này chưa có tin nào khớp bảng giá.<br>Thử tăng số tin quét hoặc chọn Toàn quốc.":"Bấm <b>Quét Ngay</b> để tìm tin mới.")+'</p></div>';
@@ -1167,31 +1173,69 @@ $("#hunt-scan").onclick=scanChotot;
 async function importFacebook(){
   let clip="";try{clip=await navigator.clipboard.readText()}catch(e){}
   if(!/^\s*\[/.test(clip))clip="";
-  const r=await uiForm({title:"Nhập Tin Từ Facebook",sub:"Dán kết quả của nút Quét Marketplace",icon:"clipboard",ok:"Nhập Vào Danh Sách",okIcon:"bolt",
-    fields:[{k:"js",label:"Dữ liệu đã copy",type:"area",rows:6,v:clip,ph:'[{"id":"...","title":"Redmi Note 13 Pro","price":3500000,...}]'}]});
+  const r=await uiForm({title:"Nhập Tin Từ Facebook",sub:"Dán kết quả của dấu trang Quét Marketplace",icon:"clipboard",ok:"Nhập Vào Danh Sách",okIcon:"bolt",
+    fields:[{k:"js",label:"Dữ liệu đã copy",type:"area",rows:6,v:clip,ph:'[{"i":"123","t":"Redmi Note 13 Pro","p":3500000,"l":"Hà Nội"}]'}]});
   if(!r||!r.js)return;
   let arr;
   try{arr=JSON.parse(r.js)}catch(e){toast("Dữ liệu không đúng định dạng","bad");return}
   if(!Array.isArray(arr)||!arr.length){toast("Không có tin nào trong dữ liệu","bad");return}
+  fbPayload(arr);
+}
+$("#hunt-fb").onclick=importFacebook;
+
+/* ---- Nút Quét Facebook: mở Marketplace đúng từ khóa, nhắc bấm dấu trang ---- */
+const FB_KW=["redmi","honor","oppo","vivo","iqoo","realme","samsung galaxy a","poco","xiaomi","điện thoại cũ"];
+async function goFacebook(){
+  const gia=S.models.reduce((a,m)=>[Math.min(a[0],m.bl),Math.max(a[1],m.sl)],[99,0]);
+  const r=await uiForm({title:"Quét Facebook Marketplace",sub:"Mở trang tìm kiếm, rồi bấm dấu trang Quét Marketplace",icon:"store",ok:"Mở Marketplace",okIcon:"store",
+    fields:[{k:"kw",label:"Từ khóa",v:"redmi",list:"dl_kw",half:1},
+            {k:"kv",label:"Khu vực",v:"hanoi",half:1},
+            {k:"min",label:"Giá từ (tr)",v:fmt(Math.max(0.3,gia[0]*0.5)),half:1,mode:"decimal"},
+            {k:"max",label:"Giá đến (tr)",v:fmt(gia[1]),half:1,mode:"decimal"}]});
+  if(!r||!r.kw)return;
+  const u="https://www.facebook.com/marketplace/"+(r.kv||"hanoi")+"/search?query="+encodeURIComponent(r.kw)+
+    "&minPrice="+Math.round(num(r.min)*1e6)+"&maxPrice="+Math.round(num(r.max)*1e6)+
+    "&daysSinceListed=7&sortBy=creation_time_descend";
+  window.open(u,"_blank","noopener");
+  toast("Đã mở Marketplace — bấm dấu trang Quét Marketplace trên trang đó","warn");
+}
+$("#hunt-fbgo").onclick=goFacebook;
+
+/* ---- Nhận dữ liệu bookmarklet gửi sang qua địa chỉ ---- */
+function fbPayload(arr,quiet){
   const old=new Set(seen()),add=[];
   arr.forEach(a=>{
-    const m=matchModel(a.title||"");if(!m)return;
-    const giaTr=(+a.price||0)/1e6;
+    const title=a.title||a.t||"";
+    const m=matchModel(title);if(!m)return;
+    const giaTr=(+(a.price||a.p)||0)/1e6;
     if(!giaTr||giaTr<0.2||giaTr>60)return;
-    const id="fb"+(a.id||Math.random());
+    const fid=String(a.id||a.i||Math.random());
     const banTB=(m.sl+m.sh)/2;
-    add.push({id:id,title:a.title||"",area:a.loc||"",seller:"",time:null,src:"facebook",
-      url:a.url||("https://www.facebook.com/marketplace/item/"+a.id),
-      giaTr:giaTr,m:m,deal:giaTr<=m.bh,lai:banTB-giaTr,isNew:!old.has(id)});
+    add.push({id:"fb"+fid,title:title,area:a.loc||a.l||"",seller:"",time:null,src:"facebook",
+      url:a.url||("https://www.facebook.com/marketplace/item/"+fid),
+      giaTr:giaTr,m:m,deal:giaTr<=m.bh,lai:banTB-giaTr,isNew:!old.has("fb"+fid)});
   });
   const have=new Set(HUNT.items.map(x=>String(x.id)));
   const fresh=add.filter(x=>!have.has(String(x.id)));
-  HUNT.items=HUNT.items.concat(fresh);HUNT.loaded=true;
+  HUNT.items=HUNT.items.concat(fresh);HUNT.loaded=true;HUNT.err=null;
   markSeen(add.map(x=>String(x.id)));
   drawHunt();
-  toast("Nhận "+arr.length+" tin — khớp mã "+add.length+", mới "+fresh.length+", món hời "+add.filter(x=>x.deal).length);
+  if(!quiet)toast("Nhận "+arr.length+" tin — khớp mã "+add.length+", mới "+fresh.length+", món hời "+add.filter(x=>x.deal).length);
+  return add.length;
 }
-$("#hunt-fb").onclick=importFacebook;
+
+(function(){
+  const h=location.hash||"";
+  const i=h.indexOf("fb=");
+  if(i<0)return;
+  let arr=null;
+  try{arr=JSON.parse(decodeURIComponent(h.slice(i+3)))}catch(e){}
+  history.replaceState(null,"",location.pathname+location.search);
+  if(!Array.isArray(arr)||!arr.length){toast("Dữ liệu từ Facebook rỗng","bad");return}
+  setTimeout(()=>{go("hunt");const n=fbPayload(arr);
+    toast(n?("Đã nhập "+n+" tin khớp mã từ Facebook"):"Không tin nào khớp bảng giá",n?"":"warn");},350);
+})();
+
 $("#hunt-region").onchange=scanChotot;
 $("#hunt-limit").onchange=scanChotot;
 $("#hunt-sort").onchange=drawHunt;
@@ -1279,6 +1323,13 @@ $("#fb-setup").onclick=async()=>{
 };
 
 $("#hunt-list").addEventListener("click",async e=>{
+  const c=e.target.closest(".hunt-copy");
+  if(c){
+    const bx=c.closest("[data-hid]");
+    const it=HUNT.items.find(i=>String(i.id)===bx.dataset.hid);
+    if(it){try{navigator.clipboard?.writeText(it.url)}catch(err){}toast("Đã copy link bài bán")}
+    return;
+  }
   const b=e.target.closest(".hunt-lead");if(!b)return;
   const box=b.closest("[data-hid]");
   const x=HUNT.items.find(i=>String(i.id)===box.dataset.hid);if(!x)return;
