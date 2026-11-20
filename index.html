@@ -278,6 +278,9 @@
           <option value="200">Quét 200 tin</option>
           <option value="300">Quét 300 tin</option>
         </select>
+        <button id="hunt-fb" class="px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-bold rounded-xl transition flex items-center gap-1.5 text-xs sm:text-sm">
+          <i class="fa-solid fa-clipboard"></i><span>Nhập từ Facebook</span>
+        </button>
         <button id="hunt-scan" class="px-4 py-2 btn-grad text-white font-bold rounded-xl transition flex items-center gap-2 text-xs sm:text-sm">
           <i class="fa-solid fa-radar"></i><span>Quét Ngay</span>
         </button>
@@ -291,6 +294,8 @@
       <button data-src="chotot" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Chợ Tốt</button>
       <button data-src="vuatot" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Vựa Tốt</button>
       <button data-src="nhattao" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Nhật Tảo</button>
+      <button data-src="facebook" class="src-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 transition">Facebook</button>
+      <button id="fb-setup" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition flex items-center gap-1.5"><i class="fa-solid fa-pen"></i>Cài đặt Facebook</button>
       <span class="w-px h-5 bg-slate-200 mx-1"></span>
       <button id="f-deal" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ món hời</button>
       <button id="f-new" class="hunt-f px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-600 transition">Chỉ tin mới</button>
@@ -675,7 +680,8 @@ const m2t=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,
 const t2m=t=>{if(!t)return null;const p=String(t).split(":");return +p[0]*60+ +p[1]};
 const fresh=()=>SEED.map((m,i)=>({id:"m"+i,brand:m[0],name:m[1],bl:m[2],bh:m[3],sl:m[4],sh:m[5]}));
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.models)return o}}catch(e){}
-  return {models:fresh(),days:{}}}
+  return {models:fresh(),days:{},fb:{groups:[],feeds:[]}}}
+function fbCfg(){if(!S.fb)S.fb={groups:[],feeds:[]};if(!S.fb.groups)S.fb.groups=[];if(!S.fb.feeds)S.fb.feeds=[];return S.fb}
 let S=load();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const day=d=>{if(!S.days[d])S.days[d]={note:"",leads:[]};return S.days[d]};
@@ -729,7 +735,7 @@ function fbBtns(m,big){
       class="${sz} rounded-lg bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition"><i class="fa-solid fa-store text-[11px]"></i>${lbl?"<span>Chợ</span>":""}</a>
     <a data-fb target="_blank" rel="noopener" title="Tìm bài viết trên Facebook" href="https://www.facebook.com/search/posts/?q=${q}"
       class="${sz} rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition"><i class="fa-solid fa-newspaper text-[11px]"></i>${lbl?"<span>Bài viết</span>":""}</a>
-    <a data-fb target="_blank" rel="noopener" title="Tìm trong group thanh lý" href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(name+" thanh lý")}"
+    <a data-fb data-groups="1" target="_blank" rel="noopener" title="Tìm trong hội nhóm của tôi" href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(name+" thanh lý")}"
       class="${sz} rounded-lg bg-purple-50 border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition"><i class="fa-solid fa-users text-[11px]"></i>${lbl?"<span>Group</span>":""}</a>
   </div>`;
 }
@@ -798,9 +804,16 @@ $("#fbrand").addEventListener("change",drawList);$("#fsort").addEventListener("c
 async function onModelClick(e){
   const tr=e.target.closest("[data-id]");if(!tr)return;
   const m=S.models.find(x=>x.id===tr.dataset.id);if(!m)return;
-  if(e.target.closest("a[data-fb]")){
+  const fbA=e.target.closest("a[data-fb]");
+  if(fbA){
     const fn=fullName(m);
     try{navigator.clipboard?.writeText(fn)}catch(err){}
+    const gs=fbCfg().groups;
+    if(fbA.dataset.groups&&gs.length){
+      e.preventDefault();
+      openGroupSearch(m,gs);
+      return;
+    }
     toast('Đã copy "'+fn+'"');
     return;
   }
@@ -966,9 +979,10 @@ $("#leads").addEventListener("click",async e=>{
 });
 
 /* ============ SĂN MÁY (Chợ Tốt) ============ */
-const SRC_LABEL={chotot:"Chợ Tốt",vuatot:"Vựa Tốt",nhattao:"Nhật Tảo"};
+const SRC_LABEL={chotot:"Chợ Tốt",vuatot:"Vựa Tốt",nhattao:"Nhật Tảo",facebook:"Facebook"};
 const SRC_STYLE={chotot:"bg-orange-50 text-orange-700 border-orange-200",
-  vuatot:"bg-sky-50 text-sky-700 border-sky-200",nhattao:"bg-violet-50 text-violet-700 border-violet-200"};
+  vuatot:"bg-sky-50 text-sky-700 border-sky-200",nhattao:"bg-violet-50 text-violet-700 border-violet-200",
+  facebook:"bg-blue-50 text-blue-700 border-blue-200"};
 const SRC_KEY="sothumay.src";
 function loadSrc(){try{const v=JSON.parse(localStorage.getItem(SRC_KEY));if(Array.isArray(v)&&v.length)return v}catch(e){}
   return ["chotot","vuatot","nhattao"]}
@@ -1025,6 +1039,18 @@ async function scanChotot(){
     return out;
   })());
 
+  if(HUNT.srcs.includes("facebook")){
+    const feeds=fbCfg().feeds;
+    if(!feeds.length)HUNT.errs.push("Facebook: chưa khai báo feed Google Alerts (bấm Cài đặt Facebook)");
+    feeds.forEach(f=>jobs.push((async()=>{
+      const r=await fetch("/api/feed?url="+encodeURIComponent(f));
+      if(!r.ok)throw new Error("Google Alerts: HTTP "+r.status);
+      const j=await r.json();
+      if(j.error)throw new Error("Google Alerts: "+j.error);
+      return (j.items||[]).map(x=>Object.assign({},x,{price:parsePrice((x.title||"")+" "+(x.body||""))*1e6}));
+    })()));
+  }
+
   ["vuatot","nhattao"].forEach(src=>{
     if(!HUNT.srcs.includes(src))return;
     jobs.push((async()=>{
@@ -1063,12 +1089,12 @@ async function scanChotot(){
     const m=matchModel(a.title);if(!m)return;
     out.push(Object.assign({},a,{giaTr:0,m:m,deal:false,lai:0,isNew:!old.has(String(a.id))}));
   });
-  HUNT.items=out;HUNT.at=new Date();HUNT.loaded=true;
+  HUNT.items=out.concat(HUNT.items.filter(x=>x.src==="facebook"));HUNT.at=new Date();HUNT.loaded=true;
   btn.disabled=false;
   drawHunt();
   markSeen(raw.map(a=>String(a.id)));
   const sw=out.filter(x=>x.deal).length;
-  if(HUNT.errs.length&&raw.length)toast("Một nguồn lỗi: "+HUNT.errs[0],"warn");
+  if(HUNT.errs.length&&raw.length)toast(HUNT.errs.length+" nguồn lỗi — hai nguồn kia vẫn chạy","warn");
   else toast(out.length?("Quét "+raw.length+" tin — khớp "+out.length+", món hời "+sw):("Quét "+raw.length+" tin, chưa có tin nào khớp"));
 }
 
@@ -1137,6 +1163,35 @@ function drawHunt(){
 }
 
 $("#hunt-scan").onclick=scanChotot;
+
+async function importFacebook(){
+  let clip="";try{clip=await navigator.clipboard.readText()}catch(e){}
+  if(!/^\s*\[/.test(clip))clip="";
+  const r=await uiForm({title:"Nhập Tin Từ Facebook",sub:"Dán kết quả của nút Quét Marketplace",icon:"clipboard",ok:"Nhập Vào Danh Sách",okIcon:"bolt",
+    fields:[{k:"js",label:"Dữ liệu đã copy",type:"area",rows:6,v:clip,ph:'[{"id":"...","title":"Redmi Note 13 Pro","price":3500000,...}]'}]});
+  if(!r||!r.js)return;
+  let arr;
+  try{arr=JSON.parse(r.js)}catch(e){toast("Dữ liệu không đúng định dạng","bad");return}
+  if(!Array.isArray(arr)||!arr.length){toast("Không có tin nào trong dữ liệu","bad");return}
+  const old=new Set(seen()),add=[];
+  arr.forEach(a=>{
+    const m=matchModel(a.title||"");if(!m)return;
+    const giaTr=(+a.price||0)/1e6;
+    if(!giaTr||giaTr<0.2||giaTr>60)return;
+    const id="fb"+(a.id||Math.random());
+    const banTB=(m.sl+m.sh)/2;
+    add.push({id:id,title:a.title||"",area:a.loc||"",seller:"",time:null,src:"facebook",
+      url:a.url||("https://www.facebook.com/marketplace/item/"+a.id),
+      giaTr:giaTr,m:m,deal:giaTr<=m.bh,lai:banTB-giaTr,isNew:!old.has(id)});
+  });
+  const have=new Set(HUNT.items.map(x=>String(x.id)));
+  const fresh=add.filter(x=>!have.has(String(x.id)));
+  HUNT.items=HUNT.items.concat(fresh);HUNT.loaded=true;
+  markSeen(add.map(x=>String(x.id)));
+  drawHunt();
+  toast("Nhận "+arr.length+" tin — khớp mã "+add.length+", mới "+fresh.length+", món hời "+add.filter(x=>x.deal).length);
+}
+$("#hunt-fb").onclick=importFacebook;
 $("#hunt-region").onchange=scanChotot;
 $("#hunt-limit").onchange=scanChotot;
 $("#hunt-sort").onchange=drawHunt;
@@ -1169,6 +1224,59 @@ document.querySelectorAll(".src-f").forEach(b=>{
   };
 });
 paintSrc();
+
+function groupName(u){
+  const m=String(u).match(/groups\/([^/?#]+)/);
+  if(!m)return u.replace(/^https?:\/\/(www\.)?facebook\.com\//,"");
+  return /^\d+$/.test(m[1])?("Nhóm "+m[1].slice(0,8)):decodeURIComponent(m[1]).replace(/-/g," ");
+}
+function openGroupSearch(m,groups){
+  const q=encodeURIComponent(fullName(m));
+  uiResolve=null;
+  UI.innerHTML=`<div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 flex flex-col max-h-[92vh]">
+    <div class="mh-grad bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 px-5 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3 min-w-0">
+        <div class="w-9 h-9 rounded-2xl flex items-center justify-center text-base shrink-0"><i class="fa-solid fa-users"></i></div>
+        <div class="min-w-0">
+          <h3 class="font-extrabold text-base leading-tight truncate">Tìm "${esc(fullName(m))}"</h3>
+          <p class="text-[11px] font-medium truncate">Đã copy tên máy · chọn nhóm để tìm</p>
+        </div>
+      </div>
+      <button data-x class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div class="p-4 space-y-2 overflow-y-auto custom-scrollbar">
+      ${groups.map(g=>`<a href="${esc(g.replace(/\/+$/,""))}/search/?q=${q}" target="_blank" rel="noopener"
+        class="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition">
+        <span class="text-sm font-bold text-slate-700 truncate">${esc(groupName(g))}</span>
+        <i class="fa-solid fa-magnifying-glass text-indigo-500 text-xs shrink-0"></i></a>`).join("")}
+      <a href="https://www.facebook.com/search/groups/?q=${encodeURIComponent(fullName(m)+" thanh lý")}" target="_blank" rel="noopener"
+        class="flex items-center justify-between gap-2 p-3 rounded-xl bg-white border border-dashed border-slate-300 hover:border-indigo-400 transition">
+        <span class="text-sm font-bold text-slate-500 truncate">Tìm nhóm mới trên Facebook</span>
+        <i class="fa-solid fa-users text-slate-400 text-xs shrink-0"></i></a>
+    </div>
+    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100">
+      <p class="text-[11px] text-slate-500 font-medium">Mẹo: trong nhóm, bấm <b>Bài viết gần đây</b> để xem tin mới nhất trước.</p>
+    </div></div>`;
+  UI.classList.remove("hidden");paintIcons(UI);
+  UI.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>closeUI(null));
+}
+
+$("#fb-setup").onclick=async()=>{
+  const c=fbCfg();
+  const r=await uiForm({title:"Cài Đặt Nguồn Facebook",sub:"Mỗi dòng một địa chỉ",icon:"facebook-f",ok:"Lưu Lại",okIcon:"floppy-disk",
+    fields:[
+      {k:"groups",label:"Hội nhóm của tôi (dán link group)",type:"area",rows:5,v:c.groups.join("\n"),
+        ph:"https://www.facebook.com/groups/123456789\nhttps://www.facebook.com/groups/thanhlydienthoaihanoi"},
+      {k:"feeds",label:"Feed Google Alerts (dán link RSS)",type:"area",rows:4,v:c.feeds.join("\n"),
+        ph:"https://www.google.com/alerts/feeds/00000000/11111111"}
+    ]});
+  if(!r)return;
+  const split=t=>String(t||"").split(/[\n\r]+/).map(x=>x.trim()).filter(x=>/^https?:\/\//.test(x));
+  c.groups=split(r.groups);c.feeds=split(r.feeds);
+  save();
+  toast("Đã lưu "+c.groups.length+" nhóm, "+c.feeds.length+" feed");
+  if(HUNT.srcs.includes("facebook"))scanChotot();
+};
 
 $("#hunt-list").addEventListener("click",async e=>{
   const b=e.target.closest(".hunt-lead");if(!b)return;
