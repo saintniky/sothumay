@@ -3,7 +3,7 @@
 // - Mất sóng thì dùng bản đã lưu, app vẫn mở và xem được dữ liệu
 // - Dữ liệu lưu trong localStorage của máy nên không phụ thuộc mạng
 // Khi sửa tệp này, tăng số phiên bản để máy nhận bản mới.
-const CACHE = 'sothumay-v1';
+const CACHE = 'sothumay-v2';
 const CORE = [
   '/',
   '/manifest.webmanifest',
@@ -30,6 +30,12 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   // Trang của mình + thư viện giao diện (Tailwind, Font Awesome, font)
+  // luôn lấy mới cấu hình Firebase, không dùng bản đã lưu
+  if (url.pathname.endsWith('/firebase-config.js')) {
+    event.respondWith(fetch(req).catch(() => caches.match(req)));
+    return;
+  }
+
   const isOwn = url.origin === self.location.origin;
   const isLib = /cdn\.tailwindcss\.com|cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(url.hostname);
   if (!isOwn && !isLib) return;

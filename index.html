@@ -147,6 +147,9 @@
     </div>
 
     <div class="pt-2.5 border-t border-slate-100 shrink-0 space-y-2">
+      <button id="sync-btn" class="w-full flex items-center justify-center gap-2 px-2.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold transition">
+        <i class="fa-solid fa-cloud text-[11px]"></i><span id="sync-txt">Đang kết nối…</span>
+      </button>
       <button id="btn-install-app" class="hidden w-full items-center justify-center gap-2 px-2.5 py-2 rounded-xl btn-grad text-white text-xs font-bold transition">
         <i class="fa-solid fa-download text-[11px]"></i><span>Cài ứng dụng</span>
       </button>
@@ -164,6 +167,7 @@
     <h1 class="font-black text-sm tracking-tight text-slate-900 truncate">Sổ <span class="text-rose-500">Thu Máy</span></h1>
     <p class="text-[10px] text-slate-400 font-medium truncate" id="m-date">—</p>
   </div>
+  <button id="sync-btn-m" class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center" title="Đồng bộ"><i class="fa-solid fa-cloud text-sm"></i></button>
   <button id="m-btn-install" class="hidden w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 items-center justify-center" title="Cài ứng dụng"><i class="fa-solid fa-download text-sm"></i></button>
   <button id="m-route" class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 text-white flex items-center justify-center" title="Mở route Google Maps"><i class="fa-solid fa-map-location-dot text-sm"></i></button>
 </header>
@@ -556,6 +560,9 @@ const ICONS={
 "radar":'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 12l6.2-5.2M12 3.5v2"/>',
 "bolt":'<path d="M13 3L5.5 13H11l-1 8 8-10.5H12.5L13 3z"/>',
 "clipboard":'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9.5 4V2.8h5V4M9 10h6M9 14h4"/>',
+"cloud":'<path d="M7 18h10a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 9.5 3.5 3.5 0 0 0 7 18z"/>',
+"cloud-check":'<path d="M7 17h10a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 8.5 3.5 3.5 0 0 0 7 17z"/><path d="M9.5 13.5l2 2 3.5-4"/>',
+"right-left":'<path d="M4 8h14l-3-3M20 16H6l3 3"/>',
 "download":'<path d="M12 3v12M7.5 11l4.5 4.5 4.5-4.5M4 20h16"/>',
 "triangle-exclamation":'<path d="M12 3.5L21 19.5H3L12 3.5z"/><path d="M12 9.5v4.5M12 16.8v.3"/>',
 "box-open":'<path d="M3 8l9-4 9 4-9 4-9-4z"/><path d="M3 8v8l9 4 9-4V8"/>',
@@ -686,7 +693,24 @@ function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r
   return {models:fresh(),days:{},fb:{groups:[],feeds:[]}}}
 function fbCfg(){if(!S.fb)S.fb={groups:[],feeds:[]};if(!S.fb.groups)S.fb.groups=[];if(!S.fb.feeds)S.fb.feeds=[];return S.fb}
 let S=load();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  if(window.STM_onSave)try{window.STM_onSave(S)}catch(e){}
+};
+/* cầu nối cho phần đồng bộ Firebase ở cuối trang */
+window.STM_state=()=>S;
+window.STM_applyCloud=(patch)=>{
+  let doi=false;
+  if(patch&&Array.isArray(patch.models)){S.models=patch.models;doi=true}
+  if(patch&&patch.days&&typeof patch.days==="object"){S.days=patch.days;doi=true}
+  if(!doi)return;
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  fillBrand();drawList();drawDay();drawTrip();
+};
+window.STM_form=(o)=>uiForm(o);
+window.STM_confirm=(o)=>uiConfirm(o);
+window.STM_toast=(m,t)=>toast(m,t);
+window.STM_icons=(r)=>paintIcons(r);
 const day=d=>{if(!S.days[d])S.days[d]={note:"",leads:[]};return S.days[d]};
 const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 let CUR=todayISO();
@@ -1473,6 +1497,150 @@ $("#copyPlan").onclick=()=>{
 
 /* ============ KHỞI ĐỘNG ============ */
 resetDT();fillBrand();drawList();drawDay();drawTrip();paintIcons();
+</script>
+
+<!-- ===================== ĐỒNG BỘ FIREBASE =====================
+     Cấu hình nằm ở tệp firebase-config.js cùng thư mục.
+     Chưa cấu hình thì app chạy bình thường, chỉ lưu trong máy. -->
+<script type="module">
+const $ = s => document.querySelector(s);
+const setTxt = (t) => { const e = $("#sync-txt"); if (e) e.textContent = t; };
+function paint(state, txt) {
+  const map = {
+    off:  ["bg-slate-100 border-slate-200 text-slate-500",  "cloud"],
+    err:  ["bg-rose-50 border-rose-200 text-rose-600",      "triangle-exclamation"],
+    wait: ["bg-amber-50 border-amber-200 text-amber-700",   "right-left"],
+    ok:   ["bg-emerald-50 border-emerald-200 text-emerald-700", "cloud-check"]
+  };
+  const [cls, ic] = map[state] || map.off;
+  const b = $("#sync-btn"), m = $("#sync-btn-m");
+  if (b) { b.className = "w-full flex items-center justify-center gap-2 px-2.5 py-2 rounded-xl border text-xs font-bold transition " + cls;
+           b.innerHTML = '<i class="fa-solid fa-' + ic + ' text-[11px]"></i><span id="sync-txt">' + txt + '</span>'; }
+  if (m) { m.className = "w-10 h-10 rounded-xl border flex items-center justify-center " + cls;
+           m.innerHTML = '<i class="fa-solid fa-' + ic + ' text-sm"></i>'; m.title = txt; }
+  if (window.STM_icons) window.STM_icons(document.body);
+}
+paint("off", "Chưa cấu hình");
+
+let cfg = null, COL = "sothumay";
+try {
+  const m = await import("./firebase-config.js");
+  cfg = m.firebaseConfig; COL = m.COLLECTION || "sothumay";
+} catch (e) { cfg = null; }
+
+const chuaCauHinh = !cfg || !cfg.apiKey || /DAN_API_KEY/.test(cfg.apiKey);
+if (chuaCauHinh) {
+  paint("off", "Chỉ lưu trong máy");
+  const h = () => window.STM_toast && window.STM_toast("Chưa cấu hình Firebase — sửa tệp firebase-config.js", "warn");
+  $("#sync-btn") && ($("#sync-btn").onclick = h);
+  $("#sync-btn-m") && ($("#sync-btn-m").onclick = h);
+} else {
+  const FB = "https://www.gstatic.com/firebasejs/10.13.0/";
+  const { initializeApp, getApps, getApp } = await import(FB + "firebase-app.js");
+  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence }
+    = await import(FB + "firebase-auth.js");
+  const { getFirestore, doc, setDoc, getDoc, onSnapshot }
+    = await import(FB + "firebase-firestore.js");
+
+  const app = getApps().length ? getApp() : initializeApp(cfg);
+  const auth = getAuth(app), db = getFirestore(app);
+  try { await setPersistence(auth, browserLocalPersistence); } catch (e) {}
+
+  const D_GIA = doc(db, COL, "bang_gia");
+  const D_HEN = doc(db, COL, "lich_hen");
+
+  let me = null, dangNhan = false, hen = null, lanDau = true;
+
+  async function dayLen(S, im) {
+    if (!me) return;
+    try {
+      paint("wait", "Đang lưu…");
+      await setDoc(D_GIA, { models: S.models || [], at: Date.now() });
+      await setDoc(D_HEN, { days: S.days || {}, at: Date.now() });
+      paint("ok", "Đã đồng bộ");
+      if (im && window.STM_toast) window.STM_toast("Đã đẩy dữ liệu lên Firebase");
+    } catch (e) {
+      paint("err", "Lỗi lưu");
+      if (window.STM_toast) window.STM_toast(
+        /permission/i.test(e.message || "") ? "Firestore từ chối ghi — kiểm tra Rules" : "Lỗi lưu: " + e.message, "bad");
+    }
+  }
+
+  window.STM_onSave = (S) => {
+    if (!me || dangNhan) return;
+    clearTimeout(hen);
+    hen = setTimeout(() => dayLen(S), 1200);
+  };
+
+  function nghe() {
+    onSnapshot(D_GIA, (snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      if (!Array.isArray(d.models)) return;
+      dangNhan = true; window.STM_applyCloud({ models: d.models }); dangNhan = false;
+      paint("ok", "Đã đồng bộ");
+    }, () => paint("err", "Mất kết nối"));
+
+    onSnapshot(D_HEN, (snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      if (!d.days || typeof d.days !== "object") return;
+      dangNhan = true; window.STM_applyCloud({ days: d.days }); dangNhan = false;
+      paint("ok", "Đã đồng bộ");
+    }, () => paint("err", "Mất kết nối"));
+  }
+
+  async function khoiDong() {
+    paint("wait", "Đang tải…");
+    try {
+      const g = await getDoc(D_GIA);
+      if (!g.exists()) await dayLen(window.STM_state());   // lần đầu: đẩy dữ liệu trong máy lên
+      nghe();
+      if (lanDau && window.STM_toast) { window.STM_toast("Đã kết nối Firebase"); lanDau = false; }
+    } catch (e) {
+      paint("err", "Lỗi kết nối");
+      if (window.STM_toast) window.STM_toast(
+        /permission/i.test(e.message || "") ? "Firestore từ chối đọc — kiểm tra Rules" : "Lỗi: " + e.message, "bad");
+    }
+  }
+
+  async function dangNhapForm() {
+    const r = await window.STM_form({
+      title: "Đăng Nhập Firebase", sub: "Tài khoản tạo trong Firebase Console > Authentication",
+      icon: "cloud", ok: "Đăng Nhập", okIcon: "cloud-check",
+      fields: [{ k: "em", label: "Email", type: "email" }, { k: "mk", label: "Mật khẩu", type: "password" }]
+    });
+    if (!r || !r.em || !r.mk) return;
+    try {
+      paint("wait", "Đang đăng nhập…");
+      await signInWithEmailAndPassword(auth, r.em, r.mk);
+    } catch (e) {
+      paint("err", "Sai tài khoản");
+      window.STM_toast && window.STM_toast("Không đăng nhập được: " + (e.code || e.message), "bad");
+    }
+  }
+
+  async function bamNut() {
+    if (!me) return dangNhapForm();
+    const ok = await window.STM_confirm({
+      title: "Đang đồng bộ với Firebase", danger: false, icon: "cloud-check",
+      msg: "Tài khoản <b class='font-bold text-slate-700'>" + (me.email || "") + "</b>.<br>Dữ liệu tự lưu lên đám mây mỗi khi anh sửa.",
+      ok: "Đẩy Lên Ngay", okIcon: "right-left"
+    });
+    if (ok) dayLen(window.STM_state(), true);
+  }
+  $("#sync-btn") && ($("#sync-btn").onclick = bamNut);
+  $("#sync-btn-m") && ($("#sync-btn-m").onclick = bamNut);
+
+  onAuthStateChanged(auth, (u) => {
+    me = u;
+    if (u) { paint("wait", "Đang tải…"); khoiDong(); }
+    else paint("off", "Chưa đăng nhập");
+  });
+
+  window.addEventListener("online",  () => me && paint("ok", "Đã đồng bộ"));
+  window.addEventListener("offline", () => paint("err", "Mất mạng"));
+}
 </script>
 </body>
 </html>
